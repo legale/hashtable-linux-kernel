@@ -50,3 +50,5 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+./build/ht ./build/ht_shared ./build/ht_static ./build/lib.a ./build/liblibht.a ./build/liblibht.so ./build/libpcap-dhcp.a
+.vscode/c_cpp_properties.json .vscode/launch.json .vscode/settings.json
