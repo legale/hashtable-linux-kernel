@@ -104,16 +104,18 @@ static int myhashtable_init(void){
     uint32_t table_size = 1 << hash_bits;
     printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
 
-    int cnt = table_size / 4;
+    int cnt_init = table_size / 4;
+    int printer = cnt_init / 4;
     // Insert the elements.
     size_t duplicates = 0;
+    int cnt = cnt_init;
     while(cnt--){
         cur = (struct h_node *)malloc(sizeof(struct h_node));
         generate_ipv4(&cur->ip);
         generate_mac(&cur->mac);
         key = hash_time33(cur->mac, IFHWADDRLEN);
 
-        if (cnt % 50000 == 0) printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s %u\n", 
+        if (cnt % printer == 0) printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s %u\n", 
             cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5],
         inet_ntoa(cur->ip), key);
         
@@ -127,10 +129,12 @@ static int myhashtable_init(void){
 
 
     // List all elements in the table.
+    cnt == cnt_init;
     hash_for_each(tbl, bkt, cur, node) {
+        cnt--;
         uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
-        if (cnt % 50000 == 0) printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s %u %u\n",
+        if (cnt % printer == 0) printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s %u %u\n",
             cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5], 
             inet_ntoa(cur->ip), bkt_calc, bkt);
     }
@@ -149,7 +153,7 @@ static int myhashtable_init(void){
         free(cur_tmp);
     }
     
-    printf("cnt: %u linked: %u perc: %d\n", cnt, linked, ((float)linked / (float)cnt) * 100);
+    printf("cnt: %u linked: %u perc: %2.2f%\n", cnt, linked, (float)linked / cnt * 100);
 
 
     return 0;
