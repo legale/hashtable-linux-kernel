@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
+
 #include <stdbool.h>
 #include <string.h>
 #include <net/if.h>
@@ -45,7 +47,6 @@ static bool matches(const char *prefix, const char *string) {
 /********************************/
 
 
-/* name entry to store MAC address */
 struct h_node {
     uint32_t name;
     struct in_addr ip;
@@ -65,15 +66,28 @@ static void generate_ipv4(struct in_addr *ip){
     ip->s_addr = random() % INT32_MAX;
 }
 
-static int myhashtable_init(void)
-{
-    //hashtable current node
-    struct h_node *cur, *node, *cur_tmp;
+static struct h_node *get_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key){    
+    struct h_node *cur, *node;
 
-    /* hashtable size */
-    DECLARE_HASHTABLE(tbl, 8);
-    /* struct hlist_head tbl[256]; */
+    hash_for_each_possible_bits(tbl, hash_bits, cur, node, key)
+    {
+        return cur;
+    }
+
+    return NULL;
     
+}
+
+
+/* hashtable size */
+/* struct hlist_head tbl[256]; */
+DECLARE_HASHTABLE(tbl, 25);  
+
+static int myhashtable_init(void){
+    //hashtable current node
+    struct h_node *cur, *node, *cur_tmp, *cur_tmp2;
+
+  
     //hashtable key
     uint32_t key;
 
@@ -85,45 +99,57 @@ static int myhashtable_init(void)
     // Initialize the hashtable.
     hash_init(tbl);
 
-    int cnt = 60;
+    //get hashtable size
+    uint32_t hash_bits = HASH_BITS(tbl);
+    uint32_t table_size = 1 << hash_bits;
+    printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
+
+    int cnt = table_size / 4;
     // Insert the elements.
+    size_t duplicates = 0;
     while(cnt--){
         cur = (struct h_node *)malloc(sizeof(struct h_node));
         generate_ipv4(&cur->ip);
         generate_mac(&cur->mac);
-        key = jenkins_one_at_a_time_hash(cur->mac, IFHWADDRLEN);
+        key = hash_time33(cur->mac, IFHWADDRLEN);
 
-        printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s %u\n", 
+        if (cnt % 50000 == 0) printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s %u\n", 
             cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5],
         inet_ntoa(cur->ip), key);
-        hash_add(tbl, &cur->node, key);
+        
+        
+
+        hash_add(tbl, &cur->node, key); 
+
+
     }
+    printf("duplicates: %lu\n", duplicates);
 
 
     // List all elements in the table.
     hash_for_each(tbl, bkt, cur, node) {
-        uint32_t bkt_calc = hash_32(jenkins_one_at_a_time_hash(cur->mac, IFHWADDRLEN), 8);
-        uint32_t key_calc = jenkins_one_at_a_time_hash(cur->mac, IFHWADDRLEN);
-        printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s %u %u\n",
+        uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
+        uint32_t bkt_calc = hash_32(key_calc, hash_bits);
+        if (cnt % 50000 == 0) printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s %u %u\n",
             cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5], 
             inet_ntoa(cur->ip), bkt_calc, bkt);
     }
 
-    // Get the element with name = "foo".
-    hash_for_each_possible(tbl, cur, node, key) {
-        printf("last key: %u ip: %s\n", key, inet_ntoa(cur->ip));
-        // Remove node
-    }
+
+    cur = get_first_found(tbl, hash_bits, key);
+    if (cur) printf("last key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
+    
 
     cnt = 0;
     int linked = 0;
     hash_for_each_safe(tbl, bkt, cur, cur_tmp, node) {
         cnt++;
         if(cur_tmp->node.next != NULL) linked++;
-        hash_del(&cur_tmp);
+        hash_del(&cur_tmp->node);
         free(cur_tmp);
     }
-    printf("cnt: %u linked: %u\n", cnt, linked);
+    
+    printf("cnt: %u linked: %u perc: %d\n", cnt, linked, ((float)linked / (float)cnt) * 100);
 
 
     return 0;
@@ -136,8 +162,5 @@ int main(int argc, char *argv[]) {
     myhashtable_init();
 
 
-
-
-    
 
 }

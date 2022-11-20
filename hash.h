@@ -17,19 +17,102 @@
 #include <sys/types.h>
 #include <asm/bitsperlong.h>
 
-/* 2^31 + 2^29 - 2^25 + 2^22 - 2^19 - 2^16 + 1 */
-#define GOLDEN_RATIO_PRIME_32 0x9e370001UL
 
-static inline u_int32_t hash_32(u_int32_t val, unsigned int bits)
+
+/*
+ * The "GOLDEN_RATIO_PRIME" is used in ifs/btrfs/brtfs_inode.h and
+ * fs/inode.c.  It's not actually prime any more (the previous primes
+ * were actively bad for hashing), but the name remains.
+ */
+#if __BITS_PER_LONG == 32
+#define GOLDEN_RATIO_PRIME GOLDEN_RATIO_32
+#define hash_long(val, bits) hash_32(val, bits)
+#elif __BITS_PER_LONG == 64
+#define hash_long(val, bits) hash_64(val, bits)
+#define GOLDEN_RATIO_PRIME GOLDEN_RATIO_64
+#else
+#error Wordsize not 32 or 64
+#endif
+
+/*
+ * This hash multiplies the input by a large odd number and takes the
+ * high bits.  Since multiplication propagates changes to the most
+ * significant end only, it is essential that the high bits of the
+ * product be used for the hash value.
+ *
+ * Chuck Lever verified the effectiveness of this technique:
+ * http://www.citi.umich.edu/techreports/reports/citi-tr-00-1.pdf
+ *
+ * Although a random odd number will do, it turns out that the golden
+ * ratio phi = (sqrt(5)-1)/2, or its negative, has particularly nice
+ * properties.  (See Knuth vol 3, section 6.4, exercise 9.)
+ *
+ * These are the negative, (1 - phi) = phi**2 = (3 - sqrt(5))/2,
+ * which is very slightly easier to multiply by and makes no
+ * difference to the hash distribution.
+ */
+#define GOLDEN_RATIO_32 0x61C88647
+#define GOLDEN_RATIO_64 0x61C8864680B583EBull
+
+
+/*
+ * The _generic versions exist only so lib/test_hash.c can compare
+ * the arch-optimized versions with the generic.
+ *
+ * Note that if you change these, any <asm/hash.h> that aren't updated
+ * to match need to have their HAVE_ARCH_* define values updated so the
+ * self-test will not false-positive.
+ */
+#ifndef HAVE_ARCH__HASH_32
+#define __hash_32 __hash_32_generic
+#endif
+static inline uint32_t __hash_32_generic(uint32_t val)
 {
-	/* On some cpus multiply is faster, on others gcc will do shifts */
-	u_int32_t hash = val * GOLDEN_RATIO_PRIME_32;
-
-	/* High bits are more random, so use them. */
-	return hash >> (32 - bits);
+	return val * GOLDEN_RATIO_32;
 }
 
-static uint32_t jenkins_one_at_a_time_hash( unsigned char *key, size_t len)
+static inline uint32_t hash_32(uint32_t val, unsigned int bits)
+{
+	/* High bits are more random, so use them. */
+	return __hash_32(val) >> (32 - bits);
+}
+
+#ifndef HAVE_ARCH_HASH_64
+#define hash_64 hash_64_generic
+#endif
+static __always_inline uint32_t hash_64_generic(uint64_t val, unsigned int bits)
+{
+#if BITS_PER_LONG == 64
+	/* 64x64-bit multiply is efficient on all 64-bit processors */
+	return val * GOLDEN_RATIO_64 >> (64 - bits);
+#else
+	/* Hash 64 bits using only 32x32-bit multiply. */
+	return hash_32((uint32_t)val ^ __hash_32(val >> 32), bits);
+#endif
+}
+
+static inline uint32_t hash_ptr(const void *ptr, unsigned int bits)
+{
+	return hash_long((unsigned long)ptr, bits);
+}
+
+/* This really should be called fold32_ptr; it does no hashing to speak of. */
+static inline uint32_t hash32_ptr(const void *ptr)
+{
+	unsigned long val = (unsigned long)ptr;
+
+#if BITS_PER_LONG == 64
+	val ^= (val >> 32);
+#endif
+	return (uint32_t)val;
+}
+
+
+
+
+
+
+static __always_inline uint32_t hash_jenkins( unsigned char *key, size_t len)
 {
     uint32_t hash, i;
     for(hash = i = 0; i < len; ++i)
@@ -43,5 +126,68 @@ static uint32_t jenkins_one_at_a_time_hash( unsigned char *key, size_t len)
     hash += (hash << 15);
     return hash;
 }
+
+/*
+ * DJBX33A (Daniel J. Bernstein, Times 33 with Addition)
+ *
+ * This is Daniel J. Bernstein's popular `times 33' hash function as
+ * posted by him years ago on comp.lang.c. It basically uses a function
+ * like ``hash(i) = hash(i-1) * 33 + str[i]''. This is one of the best
+ * known hash functions for strings. Because it is both computed very
+ * fast and distributes very well.
+ *
+ * The magic of number 33, i.e. why it works better than many other
+ * constants, prime or not, has never been adequately explained by
+ * anyone. So I try an explanation: if one experimentally tests all
+ * multipliers between 1 and 256 (as RSE did now) one detects that even
+ * numbers are not usable at all. The remaining 128 odd numbers
+ * (except for the number 1) work more or less all equally well. They
+ * all distribute in an acceptable way and this way fill a hash table
+ * with an average percent of approx. 86%.
+ *
+ * If one compares the Chi^2 values of the variants, the number 33 not
+ * even has the best value. But the number 33 and a few other equally
+ * good numbers like 17, 31, 63, 127 and 129 have nevertheless a great
+ * advantage to the remaining numbers in the large set of possible
+ * multipliers: their multiply operation can be replaced by a faster
+ * operation based on just one shift plus either a single addition
+ * or subtraction operation. And because a hash function has to both
+ * distribute good _and_ has to be very fast to compute, those few
+ * numbers should be preferred and seems to be the reason why Daniel J.
+ * Bernstein also preferred it.
+ *
+ *
+ *                  -- Ralf S. Engelschall <rse@engelschall.com>
+ */
+
+inline uint32_t hash_time33(char const *str, int len)
+{
+    uint32_t hash = 5381;
+    /* Variant with the hash unrolled eight times */
+    for (; len >= 8; len-= 8) {
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+        hash = ((hash << 5) + hash) + *str++;
+    }
+
+    switch (len) {
+        case 7: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
+        case 6: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
+        case 5: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
+        case 4: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
+        case 3: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
+        case 2: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
+        case 1: hash = ((hash << 5) + hash) + *str++; break;
+        case 0: break;
+    }
+
+    return hash;
+}
+
 
 #endif /* _LINUX_HASH_H */

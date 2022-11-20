@@ -125,6 +125,10 @@ static inline void hash_del(struct hlist_node *node)
 #define hash_for_each_possible(name, obj, member, key)			\
 	hlist_for_each_entry(obj, &name[hash_32(key, HASH_BITS(name))], member)
 
+#define hash_for_each_possible_bits(name, hash_bits, obj, member, key)			\
+	hlist_for_each_entry(obj, &name[hash_32(key, hash_bits)], member)
+
+
 /**
  * hash_for_each_possible_safe - iterate over all possible objects hashing to the
  * same bucket safe against removals

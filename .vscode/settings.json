@@ -18,6 +18,8 @@
         "compiler_attributes.h": "c",
         "int-ll64.h": "c",
         "bitsperlong.h": "c",
-        "random": "c"
+        "random": "c",
+        "stdint.h": "c",
+        "stddef.h": "c"
     }
 }
