@@ -81,7 +81,8 @@ static struct h_node *get_first_found(struct hlist_head *tbl, uint8_t hash_bits,
 
 /* hashtable size */
 /* struct hlist_head tbl[256]; */
-DECLARE_HASHTABLE(tbl, 25);  
+DECLARE_HASHTABLE(tbl, 24);  
+
 
 static int myhashtable_init(void){
     //hashtable current node
@@ -102,10 +103,11 @@ static int myhashtable_init(void){
     //get hashtable size
     uint32_t hash_bits = HASH_BITS(tbl);
     uint32_t table_size = 1 << hash_bits;
+    int cnt_init = table_size / 5;
+    int printer = cnt_init / 4;
+
     printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
 
-    int cnt_init = table_size / 4;
-    int printer = cnt_init / 4;
     // Insert the elements.
     size_t duplicates = 0;
     int cnt = cnt_init;
@@ -115,7 +117,7 @@ static int myhashtable_init(void){
         generate_mac(&cur->mac);
         key = hash_time33(cur->mac, IFHWADDRLEN);
 
-        if (cnt % printer == 0) printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s %u\n", 
+        if (cnt % printer == 0) printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s k: %u\n", 
             cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5],
         inet_ntoa(cur->ip), key);
         
@@ -134,7 +136,7 @@ static int myhashtable_init(void){
         cnt--;
         uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
-        if (cnt % printer == 0) printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s %u %u\n",
+        if (cnt % printer == 0) printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s bkt_calc/bkt: %u/%u\n",
             cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5], 
             inet_ntoa(cur->ip), bkt_calc, bkt);
     }
