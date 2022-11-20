@@ -8,7 +8,7 @@ LDLIBS +=
 LDDIRS += -L$(BD)
 
 #Compiler flags
-CFLAGS += -Wall -w -O2
+CFLAGS += -Wall -w -O3
 I += -I./ -I/usr/include
 LIB += # -lpcap
 

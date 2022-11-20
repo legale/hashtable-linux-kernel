@@ -107,7 +107,11 @@ static uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t 
 
 /* hashtable size */
 /* struct hlist_head tbl[256]; */
-DECLARE_HASHTABLE(tbl, 8);  
+#define BITS 25
+#define DENSITY 0.5 /* entries density factor */
+#define PRINT_EACH (uint32_t)((1 << BITS) * DENSITY / 2)
+DECLARE_HASHTABLE(tbl, BITS); /* table size 1 << BITS */
+
 
 
 static int myhashtable_init(void){
@@ -129,7 +133,7 @@ static int myhashtable_init(void){
     //get hashtable size
     uint32_t hash_bits = HASH_BITS(tbl);
     uint32_t table_size = 1 << hash_bits;
-    int cnt_init = table_size / 10;
+    int cnt_init = table_size * DENSITY;
     int printer = cnt_init / 4;
 
     printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
@@ -143,7 +147,7 @@ static int myhashtable_init(void){
         key = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key, hash_bits);
 
-        if (cnt % printer == 0){
+        if (cnt % PRINT_EACH == 0){
             uint8_t *m = cur->mac;
             struct in_addr *ip = &cur->ip;
             printf("add: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
@@ -166,7 +170,7 @@ static int myhashtable_init(void){
         cnt--;
         uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
-        if (cnt % printer == 0){
+        if (cnt % PRINT_EACH == 0){
             uint8_t *m = cur->mac;
             struct in_addr *ip = &cur->ip;
             printf("lst: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
@@ -212,7 +216,7 @@ static int myhashtable_init(void){
 
     //print results
     printf("dpulicates: %u\n", duplicates);
-    printf("cnt: %u linked: %u perc: %2.2f%\n", cnt, linked, (float)linked / cnt * 100);
+    printf("cnt: %u collisions: %u perc: %2.2f%\n", cnt, linked, (float)linked / cnt * 100);
 
 
     return 0;
