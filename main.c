@@ -107,8 +107,8 @@ static uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t 
 
 /* hashtable size */
 /* struct hlist_head tbl[256]; */
-#define BITS 25
-#define DENSITY 0.5 /* entries density factor */
+#define BITS 27
+#define DENSITY 0.35 /* entries density factor */
 #define PRINT_EACH (uint32_t)((1 << BITS) * DENSITY / 2)
 DECLARE_HASHTABLE(tbl, BITS); /* table size 1 << BITS */
 
@@ -134,7 +134,7 @@ static int myhashtable_init(void){
     uint32_t hash_bits = HASH_BITS(tbl);
     uint32_t table_size = 1 << hash_bits;
     int cnt_init = table_size * DENSITY;
-    int printer = cnt_init / 4;
+    int printer = PRINT_EACH;
 
     printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
 
@@ -147,7 +147,7 @@ static int myhashtable_init(void){
         key = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key, hash_bits);
 
-        if (cnt % PRINT_EACH == 0){
+        if (cnt % printer == 0){
             uint8_t *m = cur->mac;
             struct in_addr *ip = &cur->ip;
             printf("add: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
@@ -170,7 +170,7 @@ static int myhashtable_init(void){
         cnt--;
         uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
-        if (cnt % PRINT_EACH == 0){
+        if (cnt % printer == 0){
             uint8_t *m = cur->mac;
             struct in_addr *ip = &cur->ip;
             printf("lst: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
@@ -206,16 +206,22 @@ static int myhashtable_init(void){
             );
         }
         
-
         if(cur_tmp->node.next != NULL){         
             linked++;
         }
+    }
+
+
+    //remove entries
+    hash_for_each_safe(tbl, bkt, cur, cur_tmp, node) {
         hash_del(&cur_tmp->node);
         free(cur_tmp);
     }
 
+
+
     //print results
-    printf("dpulicates: %u\n", duplicates);
+    printf("duplicates: %u\n", duplicates / 2);
     printf("cnt: %u collisions: %u perc: %2.2f%\n", cnt, linked, (float)linked / cnt * 100);
 
 
