@@ -66,7 +66,7 @@ static void generate_ipv4(struct in_addr *ip){
     ip->s_addr = random() % INT32_MAX;
 }
 
-static struct h_node *get_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key){    
+static struct h_node *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key){    
     struct h_node *cur, *node;
 
     hash_for_each_possible_bits(tbl, hash_bits, cur, node, key)
@@ -78,10 +78,36 @@ static struct h_node *get_first_found(struct hlist_head *tbl, uint8_t hash_bits,
     
 }
 
+static struct h_node *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
+    struct h_node *cur, *node;
+    uint32_t key = hash_time33(mac, IFHWADDRLEN);
+
+    hash_for_each_possible_bits(tbl, hash_bits, cur, node, key)
+    {
+        if(memcmp(mac, cur->mac, IFHWADDRLEN) == 0){
+            return cur;
+        }
+    }
+
+    return NULL;
+    
+}
+
+static uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
+    struct h_node *cur, *node;
+    uint32_t cnt = 0;
+    uint32_t key = hash_time33(mac, IFHWADDRLEN);
+    hash_for_each_possible_bits(tbl, hash_bits, cur, node, key){
+        if(memcmp(cur->mac, mac, IFHWADDRLEN) == 0) ++cnt;
+    }
+    return cnt;
+    
+}
+
 
 /* hashtable size */
 /* struct hlist_head tbl[256]; */
-DECLARE_HASHTABLE(tbl, 24);  
+DECLARE_HASHTABLE(tbl, 8);  
 
 
 static int myhashtable_init(void){
@@ -103,31 +129,35 @@ static int myhashtable_init(void){
     //get hashtable size
     uint32_t hash_bits = HASH_BITS(tbl);
     uint32_t table_size = 1 << hash_bits;
-    int cnt_init = table_size / 5;
+    int cnt_init = table_size / 10;
     int printer = cnt_init / 4;
 
     printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
 
     // Insert the elements.
-    size_t duplicates = 0;
     int cnt = cnt_init;
     while(cnt--){
         cur = (struct h_node *)malloc(sizeof(struct h_node));
         generate_ipv4(&cur->ip);
         generate_mac(&cur->mac);
         key = hash_time33(cur->mac, IFHWADDRLEN);
+        uint32_t bkt_calc = hash_32(key, hash_bits);
 
-        if (cnt % printer == 0) printf("a: %02X:%02X:%02X:%02X:%02X:%02X %s k: %u\n", 
-            cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5],
-        inet_ntoa(cur->ip), key);
-        
+        if (cnt % printer == 0){
+            uint8_t *m = cur->mac;
+            struct in_addr *ip = &cur->ip;
+            printf("add: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
+                m[0],m[1],m[2],m[3],m[4],m[5], inet_ntoa(*ip)
+            );
+            printf("bkt: %u k: %u\n", bkt_calc, key); 
+        }
         
 
         hash_add(tbl, &cur->node, key); 
 
 
     }
-    printf("duplicates: %lu\n", duplicates);
+    printf("\n\n");
 
 
     // List all elements in the table.
@@ -136,25 +166,52 @@ static int myhashtable_init(void){
         cnt--;
         uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
-        if (cnt % printer == 0) printf("l: %02X:%02X:%02X:%02X:%02X:%02X %s bkt_calc/bkt: %u/%u\n",
-            cur->mac[0],cur->mac[1],cur->mac[2],cur->mac[3],cur->mac[4],cur->mac[5], 
-            inet_ntoa(cur->ip), bkt_calc, bkt);
+        if (cnt % printer == 0){
+            uint8_t *m = cur->mac;
+            struct in_addr *ip = &cur->ip;
+            printf("lst: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
+                m[0],m[1],m[2],m[3],m[4],m[5], inet_ntoa(*ip)
+            ); 
+            printf("bkt: %u k: %u\n", bkt, key_calc); 
+        }
     }
 
+    //get first entry found by key
+    cur = get_by_key_first_found(tbl, hash_bits, key);
+    if (cur) printf("get by key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
 
-    cur = get_first_found(tbl, hash_bits, key);
-    if (cur) printf("last key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
-    
+    //get first entry found by mac
+    cur = get_by_mac_first_found(tbl, hash_bits, cur->mac);
+    if (cur) printf("get by mac: %u ip: %s\n",  key, inet_ntoa(cur->ip));
 
+
+    //cycle again to count entries and count duplicates
     cnt = 0;
     int linked = 0;
+    size_t duplicates = 0;
+    uint32_t cnt_mac = 0;
     hash_for_each_safe(tbl, bkt, cur, cur_tmp, node) {
         cnt++;
-        if(cur_tmp->node.next != NULL) linked++;
+        cnt_mac = count_by_mac(tbl, hash_bits, cur_tmp->mac);
+        if (cnt_mac > 1){
+            ++duplicates;
+            uint8_t *m = cur_tmp->mac;
+            struct in_addr *ip = &cur_tmp->ip;
+            printf("dup: %02X:%02X:%02X:%02X:%02X:%02X %s\n", 
+                m[0],m[1],m[2],m[3],m[4],m[5], inet_ntoa(*ip)
+            );
+        }
+        
+
+        if(cur_tmp->node.next != NULL){         
+            linked++;
+        }
         hash_del(&cur_tmp->node);
         free(cur_tmp);
     }
-    
+
+    //print results
+    printf("dpulicates: %u\n", duplicates);
     printf("cnt: %u linked: %u perc: %2.2f%\n", cnt, linked, (float)linked / cnt * 100);
 
 

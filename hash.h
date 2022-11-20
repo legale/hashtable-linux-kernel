@@ -184,6 +184,7 @@ __always_inline uint32_t hash_time33(char const *str, int len)
         case 2: hash = ((hash << 5) + hash) + *str++; /* Fallthrough ... */
         case 1: hash = ((hash << 5) + hash) + *str++; break;
         case 0: break;
+        default: break;
     }
 
     return hash;
