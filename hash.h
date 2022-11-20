@@ -160,7 +160,7 @@ static __always_inline uint32_t hash_jenkins( unsigned char *key, size_t len)
  *                  -- Ralf S. Engelschall <rse@engelschall.com>
  */
 
-inline uint32_t hash_time33(char const *str, int len)
+__always_inline uint32_t hash_time33(char const *str, int len)
 {
     uint32_t hash = 5381;
     /* Variant with the hash unrolled eight times */
@@ -190,7 +190,8 @@ inline uint32_t hash_time33(char const *str, int len)
 }
 
 
-__always_inline uint32_t hash_fnv(const char *str, int len){
+__always_inline uint32_t hash_fnv(const char *str, int len)
+{
 	const uint32_t fnv_prime = 0x811C9DC5;
 	uint32_t hash = 0;
 	uint32_t i = 0;
