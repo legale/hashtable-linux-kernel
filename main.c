@@ -185,6 +185,7 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
                 hash_del(&cur_tmp->node);
                 free(cur_tmp); 
             }
+            break;
         }
     }
 
