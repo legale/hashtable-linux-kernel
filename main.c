@@ -144,7 +144,7 @@ static int myhashtable_init(uint32_t bits, float density){
 
     //get first entry found by key
     cur = get_by_key_first_found(tbl, hash_bits, key);
-    //if (cur) printf("get by key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
+    if (cur) printf("get by key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
 
     //get first entry found by mac
     cur = get_by_mac_first_found(tbl, hash_bits, cur->mac);
