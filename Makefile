@@ -8,7 +8,8 @@ LDLIBS +=
 LDDIRS += -L$(BD)
 
 #Compiler flags
-CFLAGS += -Wall -w -O3
+# -w to remove warnings
+CFLAGS += -Wall -O2
 I += -I./ -I/usr/include
 LIB += # -lpcap
 
@@ -17,8 +18,8 @@ CC = gcc -ggdb
 AR = ar
 
 #SRC=$(wildcard *.c)
-LIBNAME = libht
-SRC_LIB = libht.c
+LIBNAME = hashtable
+SRC_LIB = hashtable.c
 SRC_BIN = main.c
 SRC = $(SRC_LIB) $(SRC_BIN)
 

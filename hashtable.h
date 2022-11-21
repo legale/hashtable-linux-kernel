@@ -11,6 +11,17 @@
 #include "log2.h"
 #include "preload.h"
 
+struct h_node {
+    uint32_t name;
+    struct in_addr ip;
+    uint8_t mac[IFHWADDRLEN];
+    struct hlist_node node;
+} __attribute__ ((__packed__));
+
+struct h_node *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
+uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
+struct h_node *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key);
+
 #define DEFINE_HASHTABLE(name, bits)						\
 	struct hlist_head name[1 << (bits)] =					\
 			{ [0 ... ((1 << (bits)) - 1)] = HLIST_HEAD_INIT }
@@ -49,6 +60,10 @@ static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
  */
 #define hash_add(hashtable, node, key)						\
 	hlist_add_head(node, &hashtable[hash_32(key, HASH_BITS(hashtable))])
+
+#define hash_add_bits(hashtable, bits, node, key)						\
+	hlist_add_head(node, &hashtable[hash_32(key, bits)])
+
 
 /**
  * hash_hashed - check whether an object is in any hashtable
@@ -100,6 +115,11 @@ static inline void hash_del(struct hlist_node *node)
 			(bkt)++)\
 		hlist_for_each_entry(obj, &name[bkt], member)
 
+#define hash_for_each_bits(name, bits, bkt, obj, member)				\
+	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (1 << bits);\
+			(bkt)++)\
+		hlist_for_each_entry(obj, &name[bkt], member)		
+
 /**
  * hash_for_each_safe - iterate over a hashtable safe against removal of
  * hash entry
@@ -110,9 +130,14 @@ static inline void hash_del(struct hlist_node *node)
  * @member: the name of the hlist_node within the struct
  */
 #define hash_for_each_safe(name, bkt, tmp, obj, member)			\
-	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < HASH_SIZE(name);\
+	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (HASH_SIZE(name));\
 			(bkt)++)\
 		hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)
+
+#define hash_for_each_safe_bits(name, bits, bkt, tmp, obj, member)			\
+	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (1 << bits);\
+			(bkt)++)\
+		hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)		
 
 /**
  * hash_for_each_possible - iterate over all possible objects hashing to the

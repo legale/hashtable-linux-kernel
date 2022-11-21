@@ -24,9 +24,9 @@ static void incomplete_command(void) {
 
 static void usage(void) {
     fprintf(stdout,
-            "Usage:   %s {INTERFACE}  \n"
+            "Usage:   %s {BITS_SHIFT} {DENSITY} \n"
             "\n"
-            "Example: %s eth0           \n"
+            "Example: %s 10 0.5           \n"
             "\n", argv0, argv0);
     exit(-1);
 }
@@ -47,16 +47,9 @@ static bool matches(const char *prefix, const char *string) {
 /********************************/
 
 
-struct h_node {
-    uint32_t name;
-    struct in_addr ip;
-    uint8_t mac[IFHWADDRLEN];
-    struct hlist_node node;
-} __attribute__ ((__packed__));
 
 
-
-static void generate_mac( uint8_t mac[IFHWADDRLEN]){
+static void generate_mac(uint8_t *mac){
     for(int i = 0; i < IFHWADDRLEN; i++){
         mac[i] = random() % 256;
     }
@@ -66,85 +59,54 @@ static void generate_ipv4(struct in_addr *ip){
     ip->s_addr = random() % INT32_MAX;
 }
 
-static struct h_node *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key){    
-    struct h_node *cur, *node;
-
-    hash_for_each_possible_bits(tbl, hash_bits, cur, node, key)
-    {
-        return cur;
-    }
-
-    return NULL;
-    
-}
-
-static struct h_node *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
-    struct h_node *cur, *node;
-    uint32_t key = hash_time33(mac, IFHWADDRLEN);
-
-    hash_for_each_possible_bits(tbl, hash_bits, cur, node, key)
-    {
-        if(memcmp(mac, cur->mac, IFHWADDRLEN) == 0){
-            return cur;
-        }
-    }
-
-    return NULL;
-    
-}
-
-static uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
-    struct h_node *cur, *node;
-    uint32_t cnt = 0;
-    uint32_t key = hash_time33(mac, IFHWADDRLEN);
-    hash_for_each_possible_bits(tbl, hash_bits, cur, node, key){
-        if(memcmp(cur->mac, mac, IFHWADDRLEN) == 0) ++cnt;
-    }
-    return cnt;
-    
-}
 
 
-/* hashtable size */
-/* struct hlist_head tbl[256]; */
-#define BITS 27
-#define DENSITY 0.35 /* entries density factor */
-#define PRINT_EACH (uint32_t)((1 << BITS) * DENSITY / 2)
-DECLARE_HASHTABLE(tbl, BITS); /* table size 1 << BITS */
+static int myhashtable_init(uint32_t bits, float density){
 
-
-
-static int myhashtable_init(void){
     //hashtable current node
-    struct h_node *cur, *node, *cur_tmp, *cur_tmp2;
+    struct h_node *cur, *cur_tmp;
+
+
+    uint32_t printer = (uint32_t)((1 << bits) * density / 2);
+
+
+    /* 
+    * example: struct hlist_head tbl[1 << (bits)]; 
+    * DECLARE_HASHTABLE(tbl, bits); 
+    */
+    //struct hlist_head tbl[1 << bits];
+
+    struct hlist_head *tbl = malloc((1 << bits) * sizeof(struct hlist_head) );
+
+
+    // Initialize the hashtable.
+    //hash_init(tbl);
+
+    __hash_init(tbl, 1 << bits);
 
   
     //hashtable key
-    uint32_t key;
+    uint32_t key = 0;
 
     //hashtable bucket
-    uint32_t bkt;
+    uint32_t bkt = 0;
 
-    in_addr_t ipv4;
 
-    // Initialize the hashtable.
-    hash_init(tbl);
+
 
     //get hashtable size
-    uint32_t hash_bits = HASH_BITS(tbl);
+    uint32_t hash_bits = bits;
     uint32_t table_size = 1 << hash_bits;
-    int cnt_init = table_size * DENSITY;
-    int printer = PRINT_EACH;
-
-    printf("bits shift: %lu size: %lu\n", hash_bits, table_size);
+    int cnt_init = table_size * density;
+    printf("bits shift: %u hashtable size: %u\n", hash_bits, table_size);
 
     // Insert the elements.
     int cnt = cnt_init;
     while(cnt--){
         cur = (struct h_node *)malloc(sizeof(struct h_node));
         generate_ipv4(&cur->ip);
-        generate_mac(&cur->mac);
-        key = hash_time33(cur->mac, IFHWADDRLEN);
+        generate_mac((uint8_t *)&cur->mac);
+        key = hash_time33((const char *)cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key, hash_bits);
 
         if (cnt % printer == 0){
@@ -157,7 +119,7 @@ static int myhashtable_init(void){
         }
         
 
-        hash_add(tbl, &cur->node, key); 
+        hash_add_bits(tbl, bits, &cur->node, key); 
 
 
     }
@@ -166,9 +128,9 @@ static int myhashtable_init(void){
 
     // List all elements in the table.
     cnt == cnt_init;
-    hash_for_each(tbl, bkt, cur, node) {
+    hash_for_each_bits(tbl, bits, bkt, cur, node) {
         cnt--;
-        uint32_t key_calc = hash_time33(cur->mac, IFHWADDRLEN);
+        uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
         if (cnt % printer == 0){
             uint8_t *m = cur->mac;
@@ -182,7 +144,7 @@ static int myhashtable_init(void){
 
     //get first entry found by key
     cur = get_by_key_first_found(tbl, hash_bits, key);
-    if (cur) printf("get by key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
+    //if (cur) printf("get by key: %u ip: %s\n",  key, inet_ntoa(cur->ip));
 
     //get first entry found by mac
     cur = get_by_mac_first_found(tbl, hash_bits, cur->mac);
@@ -194,7 +156,7 @@ static int myhashtable_init(void){
     int linked = 0;
     size_t duplicates = 0;
     uint32_t cnt_mac = 0;
-    hash_for_each_safe(tbl, bkt, cur, cur_tmp, node) {
+    hash_for_each_safe_bits(tbl, bits, bkt, cur, cur_tmp, node) {
         cnt++;
         cnt_mac = count_by_mac(tbl, hash_bits, cur_tmp->mac);
         if (cnt_mac > 1){
@@ -213,7 +175,7 @@ static int myhashtable_init(void){
 
 
     //remove entries
-    hash_for_each_safe(tbl, bkt, cur, cur_tmp, node) {
+    hash_for_each_safe_bits(tbl, bits, bkt, cur, cur_tmp, node) {
         hash_del(&cur_tmp->node);
         free(cur_tmp);
     }
@@ -221,8 +183,8 @@ static int myhashtable_init(void){
 
 
     //print results
-    printf("duplicates: %u\n", duplicates / 2);
-    printf("cnt: %u collisions: %u perc: %2.2f%\n", cnt, linked, (float)linked / cnt * 100);
+    printf("duplicates: %lu\n", duplicates / 2);
+    printf("cnt: %u collisions: %u perc: %2.2f%%\n", cnt, linked, (float)linked / cnt * 100);
 
 
     return 0;
@@ -230,10 +192,33 @@ static int myhashtable_init(void){
 
 
 int main(int argc, char *argv[]) {
-    
-    
-    myhashtable_init();
+    int bits = 18;
+    float density = 0.5;
+
+    /* cli arguments parse */
+    argv0 = *argv; /* set program name */
+    //if (argc == 1) usage();
 
 
+    while (argc > 1) {
+        NEXT_ARG();
+        if (matches(*argv, "-h")) {
+            usage();
+        } else if (matches(*argv, "--help")) {
+            usage();
+        } else if (!matches(*argv, "-")) {
+            bits = atoi(*argv);
+            NEXT_ARG();
+            density = atof(*argv);
+        } else {
+            usage();
+        }
+        argc--;
+        argv++;
+    }
+    printf("bits: %u density: %f\n", bits, density);
+    
+    myhashtable_init(bits, density);
+    return 0;
 
 }
