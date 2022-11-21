@@ -200,7 +200,6 @@ int main(int argc, char *argv[]) {
     argv0 = *argv; /* set program name */
     //if (argc == 1) usage();
 
-
     while (argc > 1) {
         NEXT_ARG();
         if (matches(*argv, "-h")) {
