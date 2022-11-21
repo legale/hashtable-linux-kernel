@@ -138,6 +138,7 @@ static int myhashtable_init(uint32_t bits, float density){
             printf("lst: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
                 m[0],m[1],m[2],m[3],m[4],m[5], inet_ntoa(*ip)
             ); 
+            if(bkt != bkt_calc) printf("warning: bkt != bkt_calc\n");
             printf("bkt: %u k: %u\n", bkt, key_calc); 
         }
     }
