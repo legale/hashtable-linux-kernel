@@ -61,13 +61,18 @@ static void generate_ipv4(struct in_addr *ip){
 
 
 
-static int myhashtable_init(uint32_t bits, float density){
+static int myhashtable_init(uint32_t bits, float density, float print_freq_density){
+
+    //get hashtable size
+    uint32_t hash_bits = bits;
+    uint32_t table_size = 1 << hash_bits;
+    int cnt_init = table_size * density;
+    uint32_t printer = cnt_init * print_freq_density;
+    printf("bits shift: %u hashtable size: %u, entries to write: %u print density: %f\n", 
+        hash_bits, table_size, cnt_init, print_freq_density);
 
     //hashtable current node
     struct h_node *cur, *cur_tmp;
-
-
-    uint32_t printer = (uint32_t)((1 << bits) * density / 2);
 
 
     /* 
@@ -93,13 +98,6 @@ static int myhashtable_init(uint32_t bits, float density){
 
 
 
-
-    //get hashtable size
-    uint32_t hash_bits = bits;
-    uint32_t table_size = 1 << hash_bits;
-    int cnt_init = table_size * density;
-    printf("bits shift: %u hashtable size: %u\n", hash_bits, table_size);
-
     // Insert the elements.
     int cnt = cnt_init;
     while(cnt--){
@@ -109,7 +107,7 @@ static int myhashtable_init(uint32_t bits, float density){
         key = hash_time33((const char *)cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key, hash_bits);
 
-        if (cnt % printer == 0){
+        if (print_freq_density == 1 || cnt % printer == 0){
             uint8_t *m = cur->mac;
             struct in_addr *ip = &cur->ip;
             printf("add: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
@@ -132,7 +130,7 @@ static int myhashtable_init(uint32_t bits, float density){
         cnt--;
         uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
         uint32_t bkt_calc = hash_32(key_calc, hash_bits);
-        if (cnt % printer == 0){
+        if (print_freq_density == 1 || cnt % printer == 0){
             uint8_t *m = cur->mac;
             struct in_addr *ip = &cur->ip;
             printf("lst: %02X:%02X:%02X:%02X:%02X:%02X %s ", 
@@ -173,6 +171,22 @@ static int myhashtable_init(uint32_t bits, float density){
             linked++;
         }
     }
+    
+    //test delete from the middle
+    cnt = cnt_init;
+    hash_for_each_safe_bits(tbl, bits, bkt, cur, cur_tmp, node) {
+        if(cnt-- == cnt_init / 2){
+            uint8_t *m = cur_tmp->mac;
+            printf("test deletion mac: %02X:%02X:%02X:%02X:%02X:%02X\n",
+                m[0],m[1],m[2],m[3],m[4],m[5]);
+            cur_tmp = get_by_mac_first_found(tbl, hash_bits, m);
+            if (cur_tmp){
+                printf("get by mac found: %u ip: %s\n",  key, inet_ntoa(cur_tmp->ip));
+                hash_del(&cur_tmp->node);
+                free(cur_tmp); 
+            }
+        }
+    }
 
 
     //remove entries
@@ -180,12 +194,13 @@ static int myhashtable_init(uint32_t bits, float density){
         hash_del(&cur_tmp->node);
         free(cur_tmp);
     }
+    free(tbl);
 
 
 
     //print results
     printf("duplicates: %lu\n", duplicates / 2);
-    printf("cnt: %u collisions: %u perc: %2.2f%%\n", cnt, linked, (float)linked / cnt * 100);
+    printf("cnt: %u collisions: %u perc: %2.2f%%\n", cnt_init, linked, (float)linked / cnt_init * 100);
 
 
     return 0;
@@ -195,7 +210,7 @@ static int myhashtable_init(uint32_t bits, float density){
 int main(int argc, char *argv[]) {
     int bits = 18;
     float density = 0.5;
-
+    float print_freq_density = 0.5;
     /* cli arguments parse */
     argv0 = *argv; /* set program name */
     //if (argc == 1) usage();
@@ -210,15 +225,17 @@ int main(int argc, char *argv[]) {
             bits = atoi(*argv);
             NEXT_ARG();
             density = atof(*argv);
+            NEXT_ARG();
+            print_freq_density = atof(*argv);
         } else {
             usage();
         }
         argc--;
         argv++;
     }
-    printf("bits: %u density: %f\n", bits, density);
+    printf("bits: %u density: %f print frequency density: %f\n", bits, density, print_freq_density);
     
-    myhashtable_init(bits, density);
+    myhashtable_init(bits, density, print_freq_density);
     return 0;
 
 }
