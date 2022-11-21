@@ -127,7 +127,7 @@ static int myhashtable_init(uint32_t bits, float density){
 
 
     // List all elements in the table.
-    cnt == cnt_init;
+    cnt = cnt_init;
     hash_for_each_bits(tbl, bits, bkt, cur, node) {
         cnt--;
         uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
