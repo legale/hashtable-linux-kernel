@@ -15,7 +15,9 @@ struct ioctl_names {
 
 #define barrier() __asm__ __volatile__ ("" : : : "memory")
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
 
 struct event_base;
 
