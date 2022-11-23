@@ -19,19 +19,27 @@ AR = ar
 
 #SRC=$(wildcard *.c)
 LIBNAME = hashtable
-SRC_LIB = hashtable.c deque.c
-SRC_BIN = main.c
-SRC = $(SRC_LIB) $(SRC_BIN)
+SRC_LIB := hashtable.c deque.c
+SRC_BIN := main.c
+SRC := $(SRC_LIB) $(SRC_BIN)
+OBJS := $(SRC:%.c=$(BD)/%.o)
+OBJS_LIB := $(SRC_LIB:%.c=$(BD)/%.o)
 
 all: $(NAME) static shared
+.PHONY: all clean
 
-$(NAME): $(SRC)
-		mkdir -p build
+build_dir:
+	mkdir -p $(BD)
+
+$(NAME): $(OBJS) 
 		$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $(LIB) $^ -o build/$(NAME)
 
-staticlib:
-		$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $(SRC_LIB) -c -o $(BD)/lib$(LIBNAME).a
-		#$(AR) rcs build/lib$(LIBNAME).a build/lib$(LIBNAME).o
+$(BD)/%.o: %.c build_dir
+		$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $< -c -o $@
+
+
+staticlib: $(OBJS_LIB)
+		$(AR) rcs $(BD)/lib$(LIBNAME).a $^ 
 
 sharedlib:
 		$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $(SRC_LIB) -shared -fPIC -o $(BD)/lib$(LIBNAME).so
