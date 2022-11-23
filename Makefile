@@ -19,7 +19,7 @@ AR = ar
 
 #SRC=$(wildcard *.c)
 LIBNAME = hashtable
-SRC_LIB = hashtable.c
+SRC_LIB = hashtable.c deque.c
 SRC_BIN = main.c
 SRC = $(SRC_LIB) $(SRC_BIN)
 

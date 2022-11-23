@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "hashtable.h" /* linux kernel hashtable */
+#include "deque.h" /* linux kernel list based deque structure */
 
 /* cli arguments parse macro and functions */
 #define NEXT_ARG() do { argv++; if (--argc <= 0) incomplete_command(); } while(0)
@@ -59,141 +60,6 @@ static void generate_ipv4(struct in_addr *ip){
     ip->s_addr = random() % INT32_MAX;
 }
 
-//this structure to store entries as stack structure
-typedef struct deq {
-    struct h_node *node;
-    struct list_head list;
-} deq_s;
-
-typedef struct deq_head {
-    uint32_t size;
-	struct list_head list;
-} deq_head_s;
-
-#define DEFINE_DEQ(name)\
-    deq_head_s name;\
-    name.size = 0;\
-    INIT_LIST_HEAD(&name.list);\
-
-#define DEQ_PUSH_TAIL(name, max_items, entry)\
-{\
-    if(max_items && name.size == max_items){\
-        deq_s *item = list_entry(name.list.next, deq_s, list);\
-        list_del(name.list.next);\
-        free(item);\
-    }else{\
-        ++name.size;\
-    }\
-    deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));\
-    deq_item->node = entry;\
-    list_add_tail(&deq_item->list, &name.list);\
-}\
-
-
-
-#define DEQ_PUSH(name, max_items, entry)\
-{\
-    if(max_items && name.size == max_items){\
-        deq_s *item = list_entry(name.list.next, deq_s, list);\
-        list_del(name.list.next);\
-        free(item);\
-    }else{\
-        ++name.size;\
-    }\
-    deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));\
-    deq_item->node = entry;\
-    list_add(&deq_item->list, &name.list);\
-}\
-
-
-#define DEQ_FOR_EACH(name, deq_tmp_name, deq_member)\
-    deq_s *deq_tmp_name;\
-    list_for_each_entry(deq_tmp_name, &name.list, deq_member)\
-
-#define DEQ_CLEAR(name)\
-{\
-    deq_s *_tmp_item, *_tmp_item_next;\
-    list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name.list, list) {\
-        free(_tmp_item);\
-    }\
-}\
-
-#define DEQ_POP(name, item)\
-{\
-    item = list_entry(name.list.next, deq_s, list);\
-    list_del(name.list.next);\
-    --name.size;\
-}\
-
-#define DEQ_POP_TAIL(name, item)\
-{\
-    item = list_entry(name.list.prev, deq_s, list);\
-    list_del(name.list.prev);\
-    --name.size;\
-}\
-
-#define DEQ_ISEMPTY(name) (name.size == 0 ? 1 : 0)
-
-
-static void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *entry);
-static void deq_push_tail(deq_head_s *name, uint32_t max_items, void *entry);
-static void deq_push(deq_head_s *name, uint32_t max_items, void *entry);
-
-
-static void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *entry)
-{
-    if(max_items && name->size == max_items){
-        deq_s *item = list_entry(name->list.next, deq_s, list);
-        list_del(name->list.next);
-        free(item);
-    }else{
-        ++name->size;
-    }
-    deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));
-    deq_item->node = entry;
-
-    if(push_tail_flag){
-        list_add_tail(&deq_item->list, &name->list);
-    }else{
-        list_add(&deq_item->list, &name->list);
-    }
-}
-
-static void deq_push_tail(deq_head_s *name, uint32_t max_items, void *entry)
-{
-    _deq_push(name, true, max_items, entry);
-}
-
-
-static void deq_push(deq_head_s *name, uint32_t max_items, void *entry)
-{
-    _deq_push(name, false, max_items, entry);
-}
-
-
-static bool deq_isempty(deq_head_s *name){
-    return name->size == 0 ? 1 : 0;
-}
-
-
-static void deq_clear(deq_head_s *name){
-    deq_s *_tmp_item, *_tmp_item_next;
-    list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name->list, list) {
-        free(_tmp_item);
-    }
-}
-
-static void deq_pop(deq_head_s *name, deq_s **item){
-    *item = list_entry(name->list.next, deq_s, list);
-    list_del(name->list.next);
-    --name->size;
-}
-
-static void deq_pop_tail(deq_head_s *name, deq_s **item){
-    *item = list_entry(name->list.prev, deq_s, list);
-    list_del(name->list.prev);
-    --name->size;
-}
 
 static int myhashtable_init(uint32_t bits, float density, float print_freq_density){
 
@@ -206,7 +72,7 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
         hash_bits, table_size, cnt_init, print_freq_density);
 
     //hashtable current node
-    struct h_node *cur, *cur_tmp;
+    h_node_s *cur, *cur_tmp;
 
     /* 
     * example: struct hlist_head tbl[1 << (bits)]; 
@@ -237,7 +103,7 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
     // Insert the elements.
     int cnt = cnt_init;
     while(cnt--){
-        cur = (struct h_node *)malloc(sizeof(struct h_node));
+        cur = (h_node_s *)malloc(sizeof(h_node_s));
         generate_ipv4(&cur->ip);
         generate_mac((uint8_t *)&cur->mac);
         key = hash_time33((const char *)cur->mac, IFHWADDRLEN);
@@ -254,7 +120,7 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
         
 
         hash_add_bits(tbl, bits, &cur->node, key);
-        deq_push_tail(&deq, 5, cur);
+        deq_push_tail(&deq, 5, (void *)cur);
         
 
     }
@@ -317,9 +183,9 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
     {
     deq_s *item;
     deq_pop(&deq, &item);
-    struct h_node *node = item->node;
+    h_node_s *node = item->node;
     printf("deq_pop and deq_push popped item again\n");
-    deq_push(&deq, 5, node);
+    deq_push(&deq, 5, (void *)node);
     uint8_t *m = node->mac;
     printf("DEQ_POP popped entry: %02X:%02X:%02X:%02X:%02X:%02X\n",
         m[0],m[1],m[2],m[3],m[4],m[5]);    
@@ -330,7 +196,7 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
     {
     deq_s *item;
     deq_pop_tail(&deq, &item);
-    struct h_node *node = item->node;
+    h_node_s *node = item->node;
     uint8_t *m = node->mac;
     printf("DEQ_POP_TAIL popped entry: %02X:%02X:%02X:%02X:%02X:%02X\n",
         m[0],m[1],m[2],m[3],m[4],m[5]);    

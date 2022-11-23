@@ -5,22 +5,26 @@
 
 #ifndef __HASHTABLE_H__
 #define __HASHTABLE_H__
+#include <stddef.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "list.h"
 #include "hash.h"
 #include "log2.h"
 #include "preload.h"
 
-struct h_node {
+typedef struct h_node {
     uint32_t name;
     struct in_addr ip;
     uint8_t mac[IFHWADDRLEN];
     struct hlist_node node;
-} __attribute__ ((__packed__));
+}  __attribute__ ((__packed__)) h_node_s;
 
-struct h_node *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
+h_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
 uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
-struct h_node *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key);
+h_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key);
 
 #define DEFINE_HASHTABLE(name, bits)						\
 	struct hlist_head name[1 << (bits)] =					\
