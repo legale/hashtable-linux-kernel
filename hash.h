@@ -82,7 +82,7 @@ static inline uint32_t hash_32(uint32_t val, unsigned int bits)
 #endif
 static __always_inline uint32_t hash_64_generic(uint64_t val, unsigned int bits)
 {
-#if BITS_PER_LONG == 64
+#if __BITS_PER_LONG == 64
 	/* 64x64-bit multiply is efficient on all 64-bit processors */
 	return val * GOLDEN_RATIO_64 >> (64 - bits);
 #else
@@ -101,7 +101,7 @@ static inline uint32_t hash32_ptr(const void *ptr)
 {
 	unsigned long val = (unsigned long)ptr;
 
-#if BITS_PER_LONG == 64
+#if __BITS_PER_LONG == 64
 	val ^= (val >> 32);
 #endif
 	return (uint32_t)val;
