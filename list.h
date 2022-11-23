@@ -1,5 +1,5 @@
-#ifndef _LINUX_LIST_H
-#define _LINUX_LIST_H
+#ifndef _LINUX_LIST_H_
+#define _LINUX_LIST_H_
 
 #define LIST_POISON1 ((void *) 0x00100100)
 #define LIST_POISON2 ((void *) 0x00200200)
