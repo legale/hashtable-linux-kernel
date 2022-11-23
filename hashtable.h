@@ -16,10 +16,9 @@
 #include "preload.h"
 
 typedef struct h_node {
-    uint32_t name;
+    struct hlist_node node;
     struct in_addr ip;
     uint8_t mac[IFHWADDRLEN];
-    struct hlist_node node;
 }  __attribute__ ((__packed__)) h_node_s;
 
 h_node_s *get_by_mac_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    

@@ -14,13 +14,13 @@
 
 /* this structure to store entries as deque structure */
 typedef struct deq_head {
-    uint32_t size;
 	struct ht_list_head list;
+    uint32_t size;
 } deq_head_s;
 
 typedef struct deq {
-    h_node_s *node;
     struct ht_list_head list;
+    h_node_s *node;
 } deq_s;
 
 #define DEFINE_DEQ(name)\
