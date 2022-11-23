@@ -8,8 +8,8 @@
 
 void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *entry){
     if(max_items && name->size == max_items){
-        deq_s *item = list_entry(name->list.next, deq_s, list);
-        list_del(name->list.next);
+        deq_s *item = ht_list_entry(name->list.next, deq_s, list);
+        ht_list_del(name->list.next);
         free(item);
     }else{
         ++name->size;
@@ -18,9 +18,9 @@ void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *
     deq_item->node = entry;
 
     if(push_tail_flag){
-        list_add_tail(&deq_item->list, &name->list);
+        ht_list_add_tail(&deq_item->list, &name->list);
     }else{
-        list_add(&deq_item->list, &name->list);
+        ht_list_add(&deq_item->list, &name->list);
     }
 }
 
@@ -42,21 +42,21 @@ bool deq_isempty(deq_head_s *name){
 
 void deq_clear(deq_head_s *name){
     deq_s *_tmp_item, *_tmp_item_next;
-    list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name->list, list) {
+    ht_list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name->list, list) {
         free(_tmp_item);
     }
 }
 
 
 void deq_pop(deq_head_s *name, deq_s **item){
-    *item = list_entry(name->list.next, deq_s, list);
-    list_del(name->list.next);
+    *item = ht_list_entry(name->list.next, deq_s, list);
+    ht_list_del(name->list.next);
     --name->size;
 }
 
 
 void deq_pop_tail(deq_head_s *name, deq_s **item){
-    *item = list_entry(name->list.prev, deq_s, list);
-    list_del(name->list.prev);
+    *item = ht_list_entry(name->list.prev, deq_s, list);
+    ht_list_del(name->list.prev);
     --name->size;
 }

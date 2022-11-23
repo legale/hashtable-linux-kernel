@@ -13,7 +13,7 @@
 
 
 
-h_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key){    
+h_node_s *get_by_key_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint32_t key){    
     h_node_s *cur;
     /* h_node_s *node; this var is unused */
 
@@ -25,7 +25,7 @@ h_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint
     
 }
 
-h_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
+h_node_s *get_by_mac_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
     h_node_s *cur;
     /* h_node_s *node; this var is unused */
     uint32_t key = hash_time33((const char *)mac, IFHWADDRLEN);
@@ -41,7 +41,7 @@ h_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint
     
 }
 
-uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
+uint32_t count_by_mac(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]){    
     h_node_s *cur;
     /* h_node_s *node; this var is unused */
     uint32_t cnt = 0;

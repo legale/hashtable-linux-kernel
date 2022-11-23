@@ -22,13 +22,13 @@ typedef struct h_node {
     struct hlist_node node;
 }  __attribute__ ((__packed__)) h_node_s;
 
-h_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
-uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
-h_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key);
+h_node_s *get_by_mac_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
+uint32_t count_by_mac(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
+h_node_s *get_by_key_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint32_t key);
 
 #define DEFINE_HASHTABLE(name, bits)						\
 	struct hlist_head name[1 << (bits)] =					\
-			{ [0 ... ((1 << (bits)) - 1)] = HLIST_HEAD_INIT }
+			{ [0 ... ((1 << (bits)) - 1)] = HT_HLIST_HEAD_INIT }
 
 #define DECLARE_HASHTABLE(name, bits)                                   	\
 	struct hlist_head name[1 << (bits)]
@@ -36,12 +36,12 @@ h_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint
 #define HASH_SIZE(name) (ARRAY_SIZE(name))
 #define HASH_BITS(name) ilog2(HASH_SIZE(name))
 
-static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
+static inline void __hash_init(struct ht_hlist_head *ht, unsigned int sz)
 {
 	unsigned int i;
 
 	for (i = 0; i < sz; i++)
-		INIT_HLIST_HEAD(&ht[i]);
+		HT_INIT_HLIST_HEAD(&ht[i]);
 }
 
 /**
@@ -63,10 +63,10 @@ static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
  * @key: the key of the object to be added
  */
 #define hash_add(hashtable, node, key)						\
-	hlist_add_head(node, &hashtable[hash_32(key, HASH_BITS(hashtable))])
+	ht_hlist_add_head(node, &hashtable[hash_32(key, HASH_BITS(hashtable))])
 
 #define hash_add_bits(hashtable, bits, node, key)						\
-	hlist_add_head(node, &hashtable[hash_32(key, bits)])
+	ht_hlist_add_head(node, &hashtable[hash_32(key, bits)])
 
 
 /**
@@ -75,15 +75,15 @@ static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
  */
 static inline int hash_hashed(struct hlist_node *node)
 {
-	return !hlist_unhashed(node);
+	return !ht_hlist_unhashed(node);
 }
 
-static inline int __hash_empty(struct hlist_head *ht, unsigned int sz)
+static inline int __hash_empty(struct ht_hlist_head *ht, unsigned int sz)
 {
 	unsigned int i;
 
 	for (i = 0; i < sz; i++)
-		if (!hlist_empty(&ht[i]))
+		if (!ht_hlist_empty(&ht[i]))
 			return 0;
 
 	return 1;
@@ -104,7 +104,7 @@ static inline int __hash_empty(struct hlist_head *ht, unsigned int sz)
  */
 static inline void hash_del(struct hlist_node *node)
 {
-	hlist_del_init(node);
+	ht_hlist_del_init(node);
 }
 
 /**
@@ -117,12 +117,12 @@ static inline void hash_del(struct hlist_node *node)
 #define hash_for_each(name, bkt, obj, member)				\
 	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < HASH_SIZE(name);\
 			(bkt)++)\
-		hlist_for_each_entry(obj, &name[bkt], member)
+		ht_hlist_for_each_entry(obj, &name[bkt], member)
 
 #define hash_for_each_bits(name, bits, bkt, obj, member)				\
 	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (1 << bits);\
 			(bkt)++)\
-		hlist_for_each_entry(obj, &name[bkt], member)		
+		ht_hlist_for_each_entry(obj, &name[bkt], member)		
 
 /**
  * hash_for_each_safe - iterate over a hashtable safe against removal of
@@ -136,12 +136,12 @@ static inline void hash_del(struct hlist_node *node)
 #define hash_for_each_safe(name, bkt, tmp, obj, member)			\
 	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (HASH_SIZE(name));\
 			(bkt)++)\
-		hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)
+		ht_hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)
 
 #define hash_for_each_safe_bits(name, bits, bkt, tmp, obj, member)			\
 	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (1 << bits);\
 			(bkt)++)\
-		hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)		
+		ht_hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)		
 
 /**
  * hash_for_each_possible - iterate over all possible objects hashing to the
@@ -152,10 +152,10 @@ static inline void hash_del(struct hlist_node *node)
  * @key: the key of the objects to iterate over
  */
 #define hash_for_each_possible(name, obj, member, key)			\
-	hlist_for_each_entry(obj, &name[hash_32(key, HASH_BITS(name))], member)
+	ht_hlist_for_each_entry(obj, &name[hash_32(key, HASH_BITS(name))], member)
 
 #define hash_for_each_possible_bits(name, hash_bits, obj, member, key)			\
-	hlist_for_each_entry(obj, &name[hash_32(key, hash_bits)], member)
+	ht_hlist_for_each_entry(obj, &name[hash_32(key, hash_bits)], member)
 
 
 /**
@@ -168,7 +168,7 @@ static inline void hash_del(struct hlist_node *node)
  * @key: the key of the objects to iterate over
  */
 #define hash_for_each_possible_safe(name, obj, tmp, member, key)	\
-	hlist_for_each_entry_safe(obj, tmp,\
+	ht_hlist_for_each_entry_safe(obj, tmp,\
 		&name[hash_32(key, HASH_BITS(name))], member)
 
 

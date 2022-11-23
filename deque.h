@@ -15,31 +15,31 @@
 /* this structure to store entries as deque structure */
 typedef struct deq_head {
     uint32_t size;
-	struct list_head list;
+	struct ht_list_head list;
 } deq_head_s;
 
 typedef struct deq {
     h_node_s *node;
-    struct list_head list;
+    struct ht_list_head list;
 } deq_s;
 
 #define DEFINE_DEQ(name)\
     deq_head_s name;\
     name.size = 0;\
-    INIT_LIST_HEAD(&name.list);\
+    HT_INIT_LIST_HEAD(&name.list);\
 
 #define DEQ_PUSH_TAIL(name, max_items, entry)\
 {\
     if(max_items && name.size == max_items){\
-        deq_s *item = list_entry(name.list.next, deq_s, list);\
-        list_del(name.list.next);\
+        deq_s *item = ht_list_entry(name.list.next, deq_s, list);\
+        ht_list_del(name.list.next);\
         free(item);\
     }else{\
         ++name.size;\
     }\
     deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));\
     deq_item->node = entry;\
-    list_add_tail(&deq_item->list, &name.list);\
+    ht_list_add_tail(&deq_item->list, &name.list);\
 }\
 
 
@@ -47,41 +47,41 @@ typedef struct deq {
 #define DEQ_PUSH(name, max_items, entry)\
 {\
     if(max_items && name.size == max_items){\
-        deq_s *item = list_entry(name.list.next, deq_s, list);\
-        list_del(name.list.next);\
+        deq_s *item = ht_list_entry(name.list.next, deq_s, list);\
+        ht_list_del(name.list.next);\
         free(item);\
     }else{\
         ++name.size;\
     }\
     deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));\
     deq_item->node = entry;\
-    list_add(&deq_item->list, &name.list);\
+    ht_list_add(&deq_item->list, &name.list);\
 }\
 
 
 #define DEQ_FOR_EACH(name, deq_tmp_name, deq_member)\
     deq_s *deq_tmp_name;\
-    list_for_each_entry(deq_tmp_name, &name.list, deq_member)\
+    ht_list_for_each_entry(deq_tmp_name, &name.list, deq_member)\
 
 #define DEQ_CLEAR(name)\
 {\
     deq_s *_tmp_item, *_tmp_item_next;\
-    list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name.list, list) {\
+    ht_list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name.list, list) {\
         free(_tmp_item);\
     }\
 }\
 
 #define DEQ_POP(name, item)\
 {\
-    item = list_entry(name.list.next, deq_s, list);\
-    list_del(name.list.next);\
+    item = ht_list_entry(name.list.next, deq_s, list);\
+    ht_list_del(name.list.next);\
     --name.size;\
 }\
 
 #define DEQ_POP_TAIL(name, item)\
 {\
-    item = list_entry(name.list.prev, deq_s, list);\
-    list_del(name.list.prev);\
+    item = ht_list_entry(name.list.prev, deq_s, list);\
+    ht_list_del(name.list.prev);\
     --name.size;\
 }\
 

@@ -80,7 +80,7 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
     */
     //struct hlist_head tbl[1 << bits];
 
-    struct hlist_head *tbl = malloc((1 << bits) * sizeof(struct hlist_head) );
+    struct ht_hlist_head *tbl = malloc((1 << bits) * sizeof(struct ht_hlist_head) );
 
 
     // Initialize the hashtable.
