@@ -14,9 +14,8 @@
  * machines where multiplications are slow.
  */
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <asm/bitsperlong.h>
-
 
 
 /*
@@ -80,7 +79,8 @@ static inline uint32_t hash_32(uint32_t val, unsigned int bits)
 #ifndef HAVE_ARCH_HASH_64
 #define hash_64 hash_64_generic
 #endif
-static __always_inline uint32_t hash_64_generic(uint64_t val, unsigned int bits)
+static inline __attribute__((const))
+uint32_t hash_64_generic(uint64_t val, unsigned int bits)
 {
 #if __BITS_PER_LONG == 64
 	/* 64x64-bit multiply is efficient on all 64-bit processors */

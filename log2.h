@@ -12,9 +12,10 @@
 #ifndef __LOG2_H__
 #define __LOG2_H__
 
-#include <sys/types.h>
+#include <stdint.h>
 
-static __always_inline int fls(int x)
+static inline __attribute__((const))
+int fls(int x)
 {
 	return x ? sizeof(x) * 8 - __builtin_clz(x) : 0;
 }
@@ -32,7 +33,7 @@ int ____ilog2_NaN(void);
  * - the arch is not required to handle n==0 if implementing the fallback
  */
 static inline __attribute__((const))
-int __ilog2_u32(u_int32_t n)
+int __ilog2_u32(uint32_t n)
 {
 	return fls(n) - 1;
 }
