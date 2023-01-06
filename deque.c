@@ -40,7 +40,7 @@ bool deq_isempty(deq_head_s *name){
 }
 
 
-void deq_clear(deq_head_s *name){
+void deq_free(deq_head_s *name){
     deq_s *_tmp_item, *_tmp_item_next;
     ht_list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name->list, list) {
         free(_tmp_item);

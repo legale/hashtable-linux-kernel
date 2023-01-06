@@ -238,18 +238,16 @@ static int myhashtable_init(uint32_t bits, float density, float print_freq_densi
 
 
 
-    //remove entries from hashtable
-    hash_for_each_safe_bits(tbl, bits, bkt, cur, cur_tmp, node) {
-        hash_del(&cur_tmp->node);
-        free(cur_tmp);
-    }
+    //remove ht entries
+    hashtable_free(tbl, bits);
+    //remove ht
     free(tbl);
 
-
     //remove deque entries
-    deq_clear(&deq);
+    deq_free(&deq);
     printf("check DEQ_IS_EMPTY: %d\n", deq_isempty(&deq));
     
+    //deque itself is on stack no need to free.
 
 
     //print results

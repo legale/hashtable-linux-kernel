@@ -24,6 +24,7 @@ typedef struct h_node {
 h_node_s *get_by_mac_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
 uint32_t count_by_mac(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
 h_node_s *get_by_key_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint32_t key);
+void hashtable_free(struct ht_hlist_head *tbl, uint32_t bits);
 
 #define DEFINE_HASHTABLE(name, bits)						\
 	struct hlist_head name[1 << (bits)] =					\

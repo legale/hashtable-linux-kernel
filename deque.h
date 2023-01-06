@@ -93,7 +93,7 @@ void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *
 void deq_push_tail(deq_head_s *name, uint32_t max_items, void *entry);
 void deq_push(deq_head_s *name, uint32_t max_items, void *entry);
 bool deq_isempty(deq_head_s *name);
-void deq_clear(deq_head_s *name);
+void deq_free(deq_head_s *name);
 void deq_pop(deq_head_s *name, deq_s **item);
 void deq_pop_tail(deq_head_s *name, deq_s **item);
 

@@ -53,3 +53,11 @@ uint32_t count_by_mac(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[
     
 }
 
+void hashtable_free(struct ht_hlist_head *tbl, uint32_t bits){
+    h_node_s *cur, *cur_tmp;
+    uint32_t bkt = 0;
+    hash_for_each_safe_bits(tbl, bits, bkt, cur, cur_tmp, node) {
+        hash_del(&cur_tmp->node);
+        free(cur_tmp);
+    }
+}
