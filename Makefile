@@ -9,7 +9,7 @@ LDDIRS += -L$(BD)
 
 #Compiler flags
 # -w to remove warnings
-CFLAGS += -Wall -O2
+CFLAGS += -Wall -Wextra -O2 -Wno-unused-parameter
 I += -I./ -I/usr/include
 LIB += # -lpcap
 
