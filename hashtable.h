@@ -19,7 +19,7 @@ typedef struct h_node {
     struct hlist_node node;
     struct in_addr ip;
     uint8_t mac[IFHWADDRLEN];
-}  __attribute__ ((__packed__, aligned(4))) h_node_s;
+} h_node_s;
 
 h_node_s *get_by_mac_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
 uint32_t count_by_mac(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
