@@ -15,6 +15,10 @@
 #include "log2.h"
 #include "preload.h"
 
+#ifndef IWINFO_ESSID_MAX_SIZE
+#define IWINFO_ESSID_MAX_SIZE 32
+#endif
+
 typedef struct h_node {
     struct hlist_node node;
     struct in_addr ip;
@@ -120,7 +124,7 @@ static inline void hash_del(struct hlist_node *node)
 		ht_hlist_for_each_entry(obj, &name[bkt], member)
 
 #define hash_for_each_bits(name, bits, bkt, obj, member)				\
-	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (1 << bits);\
+	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (unsigned)(1 << bits);\
 			(bkt)++)\
 		ht_hlist_for_each_entry(obj, &name[bkt], member)		
 
@@ -139,7 +143,7 @@ static inline void hash_del(struct hlist_node *node)
 		ht_hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)
 
 #define hash_for_each_safe_bits(name, bits, bkt, tmp, obj, member)			\
-	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (1 << bits);\
+	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < (unsigned)(1 << bits);\
 			(bkt)++)\
 		ht_hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)		
 

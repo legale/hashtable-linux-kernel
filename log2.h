@@ -129,8 +129,11 @@ int is_power_of_2(unsigned long n)
 		(n) & (1ULL <<  0) ?  0 :	\
 		____ilog2_NaN()			\
 				   ) :		\
-	__ilog2_u32(n)				\
+	(sizeof(n) <= 4) ?			\
+	__ilog2_u32(n) :			\
+	__ilog2_u64(n)				\
  )
+
 
 /**
  * roundup_pow_of_two - round the given value up to nearest power of two
