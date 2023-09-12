@@ -22,8 +22,9 @@ h_node_s *get_by_key_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, u
   return NULL;
 }
 
-h_node_s *cur;
+
 h_node_s *get_by_mac_first_found(struct ht_hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]) {
+  h_node_s *cur;
   if (tbl == NULL) return NULL;
   uint32_t key = hash_time33((const char *)mac, IFHWADDRLEN);
 
