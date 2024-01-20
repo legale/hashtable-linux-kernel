@@ -15,7 +15,7 @@ void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *
         ++name->size;
     }
     deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));
-    deq_item->node = entry;
+    deq_item->data = entry;
 
     if(push_tail_flag){
         ht_list_add_tail(&deq_item->list, &name->list);
