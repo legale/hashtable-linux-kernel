@@ -75,8 +75,9 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   printf("bits shift: %u hashtable size: %u, entries to write: %u print density: %f\n",
          hash_bits, table_size, cnt_init, print_freq_density);
 
-  // hashtable current node
-  mac_node_s *cur, *cur_tmp;
+  // hashtable current node and tmp var for use with _safe macro
+  struct hlist_node *tmp;
+  mac_node_s *cur;
 
   /*
    * example: struct hlist_head tbl[1 << (bits)];
@@ -103,10 +104,10 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   // Insert the elements.
   int cnt = cnt_init;
   while (cnt--) {
-    cur = (mac_node_s *)malloc(sizeof(mac_node_s));
+    cur = (mac_node_s *)calloc(1, sizeof(mac_node_s));
     generate_ipv4(&cur->ip);
     generate_mac((uint8_t *)&cur->mac);
-    key = hash_time33((const char *)cur->mac, ETH_ALEN);
+    key = hash_time33((const char *)cur->mac, IFHWADDRLEN);
     uint32_t bkt_calc = hash_32(key, hash_bits);
 
     if (print_freq_density == 1 || cnt % printer == 0) {
@@ -128,7 +129,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   cnt = cnt_init;
   hash_for_each_bits(tbl, hash_bits, bkt, cur, node) {
     cnt--;
-    uint32_t key_calc = hash_time33((const char *)cur->mac, ETH_ALEN);
+    uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
     uint32_t bkt_calc = hash_32(key_calc, hash_bits);
     if (print_freq_density == 1 || cnt % printer == 0) {
       uint8_t *m = cur->mac;
@@ -148,25 +149,12 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   cur = get_by_mac_first_found(tbl, hash_bits, cur->mac);
   if (cur) printf("get by mac: %u ip: %s\n", key, inet_ntoa(cur->ip));
 
-  // cycle again to count entries and count duplicates
-  cnt = 0;
-  int linked = 0;
-  size_t duplicates = 0;
-  uint32_t cnt_mac = 0;
-  hash_for_each_safe_bits(tbl, hash_bits, bkt, cur, cur_tmp, node) {
-    cnt++;
-    cnt_mac = count_by_mac(tbl, hash_bits, cur_tmp->mac);
-    if (cnt_mac > 1) {
-      ++duplicates;
-      uint8_t *m = cur_tmp->mac;
-      struct in_addr *ip = &cur_tmp->ip;
-      printf("dup: %02X:%02X:%02X:%02X:%02X:%02X %s\n",
-             m[0], m[1], m[2], m[3], m[4], m[5], inet_ntoa(*ip));
-    }
-
-    if (cur_tmp->node.next != NULL) {
-      linked++;
-    }
+  // count entries with specified mac
+  {
+    uint32_t cnt_mac = count_by_mac(tbl, hash_bits, cur->mac);
+    uint8_t *m = cur->mac;
+    printf("mac: %02X:%02X:%02X:%02X:%02X:%02X\n", m[0], m[1], m[2], m[3], m[4], m[5]);
+    printf("cnt: %u\n", cnt_mac);
   }
 
   // DEQ_POP AND PUSH TEST
@@ -195,39 +183,63 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   }
 
   // for each deque entry
-  printf("Listing deque entries (%u):\n", deq.size);
-  cnt = 0;
-  DEQ_FOR_EACH(deq, tmp, list) {
-    uint8_t *m = ((mac_node_s *)(tmp->data))->mac;
-    struct in_addr *ip = &(((mac_node_s *)(tmp->data))->ip);
-    printf("%u %02X:%02X:%02X:%02X:%02X:%02X %s\n",
-           cnt++,
-           m[0], m[1], m[2], m[3], m[4], m[5],
-           inet_ntoa(*ip));
-  }
-
-  // test delete from the middle
-  cnt = cnt_init;
-  hash_for_each_safe_bits(tbl, hash_bits, bkt, cur, cur_tmp, node) {
-    if (cnt-- == cnt_init / 2) {
-      uint8_t *m = cur_tmp->mac;
-      printf("test deletion mac: %02X:%02X:%02X:%02X:%02X:%02X\n",
-             m[0], m[1], m[2], m[3], m[4], m[5]);
-      cur_tmp = get_by_mac_first_found(tbl, hash_bits, m);
-      if (cur_tmp) {
-        printf("get by mac found: %u ip: %s\n", key, inet_ntoa(cur_tmp->ip));
-        hash_del(&cur_tmp->node);
-        free(cur_tmp);
-      }
-      break;
+  {
+    printf("Listing deque entries (%u):\n", deq.size);
+    cnt = 0;
+    deq_s *item;
+    DEQ_FOR_EACH(deq, item, list) {
+      uint8_t *m = ((mac_node_s *)(item->data))->mac;
+      struct in_addr *ip = &(((mac_node_s *)(item->data))->ip);
+      printf("%u %02X:%02X:%02X:%02X:%02X:%02X %s\n",
+             cnt++,
+             m[0], m[1], m[2], m[3], m[4], m[5],
+             inet_ntoa(*ip));
     }
   }
 
+  printf("Listing hashtable entries:\n");
+  cnt = cnt_init;
+  hash_for_each_bits(tbl, hash_bits, bkt, cur, node) {
+    cnt--;
+    uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
+    uint32_t bkt_calc = hash_32(key_calc, hash_bits);
+    if (print_freq_density == 1 || cnt % printer == 0) {
+      uint8_t *m = cur->mac;
+      struct in_addr *ip = &cur->ip;
+      printf("lst: %02X:%02X:%02X:%02X:%02X:%02X %s ",
+             m[0], m[1], m[2], m[3], m[4], m[5], inet_ntoa(*ip));
+      if (bkt != bkt_calc) printf("warning: bkt != bkt_calc\n");
+      printf("bkt: %u k: %u\n", bkt, key_calc);
+    }
+  }
+
+
+  {
+    // test delete from the middle
+    cnt = cnt_init;
+    printf("%d\n", __LINE__);
+    hash_for_each_safe_bits(tbl, hash_bits, bkt, tmp, cur, node) {
+      if (cnt-- == cnt_init / 2) {
+        printf("%d\n", __LINE__);
+        uint8_t *m = cur->mac;
+        printf("test deletion mac: %02X:%02X:%02X:%02X:%02X:%02X\n", m[0], m[1], m[2], m[3], m[4], m[5]);
+
+        mac_node_s *found = get_by_mac_first_found(tbl, hash_bits, m);
+        if (found) {
+          printf("get by mac found: %u ip: %s\n", key, inet_ntoa(found->ip));
+          hash_del(&found->node);
+          free(found);
+        }
+        break;
+      }
+    }
+  }
   // remove ht entries
   /* The `CLEAR_HASHTABLE_BITS` macro is used to clear all entries in a hashtable. It takes four
   arguments: the hashtable (`tbl`), the number of bits used for the hashtable (`bits`), the type of
   the hashtable entry (`mac_node_s`), and the name of the hashtable node structure (`node`). */
-  CLEAR_HASHTABLE_BITS(tbl, bits, mac_node_s, node);
+  // method 1: CLEAR_HASHTABLE_BITS(tbl, bits, mac_node_s, node);
+  mactable_free(tbl, bits);
 
   // remove ht
   free(tbl);
@@ -237,10 +249,6 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   printf("check DEQ_IS_EMPTY: %d\n", deq_isempty(&deq));
 
   // deque itself is on stack no need to free.
-
-  // print results
-  printf("duplicates: %lu\n", duplicates / 2);
-  // printf("cnt: %u collisions: %u perc: %2.2f%%\n", cnt_init, linked, (float)linked / cnt_init * 100);
 
   return 0;
 }
@@ -263,7 +271,7 @@ static char *find_string_in_hashtable(hashtable_t *ht, const char *str) {
   uint32_t key = hash_time33(str, strlen(str));
   uint32_t bkt = hash_32(key, ht->bits);
   string_entry_t *entry;
-  ht_hlist_for_each_entry(entry, &ht->table[bkt], node) {
+  hlist_for_each_entry(entry, &ht->table[bkt], node) {
     if (strcmp(entry->str, str) == 0) {
       return entry->str;
     }
@@ -274,16 +282,17 @@ static char *find_string_in_hashtable(hashtable_t *ht, const char *str) {
 static int delete_string_from_hashtable(hashtable_t *ht, const char *str) {
   uint32_t key = hash_time33(str, strlen(str));
   uint32_t bkt = hash_32(key, ht->bits);
-  string_entry_t *entry, *tmp;
+  struct hlist_node *tmp;
+  string_entry_t *cur;
 
-  ht_hlist_for_each_entry_safe(entry, tmp, &ht->table[bkt], node) {
-    if (strcmp(entry->str, str) == 0) {
-      ht_hlist_del(&entry->node);
-      free(entry); // free entry memory
-      return 0;    // if deleted
+  hlist_for_each_entry_safe(cur, tmp, &ht->table[bkt], node) {
+    if (strcmp(cur->str, str) == 0) {
+      hlist_del(&cur->node);
+      free(cur);
+      return 0; // deleted
     }
   }
-  return 1;
+  return 1; // not found
 }
 
 static size_t count_hashtable_collisions(hashtable_t *ht) {
@@ -294,7 +303,7 @@ static size_t count_hashtable_collisions(hashtable_t *ht) {
     struct hlist_node *node;
     int bucket_count = 0;
 
-    ht_hlist_for_each(node, head) {
+    hlist_for_each(node, head) {
       ++bucket_count;
     }
 
@@ -313,7 +322,7 @@ static size_t count_hashtable_entries(hashtable_t *ht) {
     struct hlist_node *node;
     int bucket_count = 0;
 
-    ht_hlist_for_each(node, head) {
+    hlist_for_each(node, head) {
       ++bucket_count;
     }
 
