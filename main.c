@@ -213,7 +213,6 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
     }
   }
 
-
   {
     // test delete from the middle
     cnt = cnt_init;
@@ -331,8 +330,12 @@ static size_t count_hashtable_entries(hashtable_t *ht) {
   return entries;
 }
 
+static void free_string_entry(void *entry) {
+  free(entry);
+}
+
 static int do_hashtable_stuff2(uint8_t bits, float density, float print_freq_density) {
-  hashtable_t *ht = create_hashtable(bits);
+  hashtable_t *ht = create_hashtable(bits, free_string_entry);
   if (!ht) {
     perror("Failed to create hashtable");
     return 1;
@@ -367,8 +370,93 @@ static int do_hashtable_stuff2(uint8_t bits, float density, float print_freq_den
   found_str = find_string_in_hashtable(ht, "test_string_1");
   if (!found_str) printf("NOT Found: %s as expected\n", "test_string_1");
 
-  CLEAR_HASHTABLE(ht, string_entry_t, node);
-  free_hashtable(ht);
+  FREE_HASHTABLE(ht, string_entry_t, node, free_string_entry);
+
+  return 0;
+}
+
+// more complicated example with dynamically allocated strings in a hash table
+typedef struct string_entry2 {
+  struct hlist_node node; // hashtable list node structure
+  char *str;              // str ptr
+} string_entry2_t;
+
+void free_string_entry2(void *entry) {
+  string_entry2_t *string_entry = (string_entry2_t *)entry;
+  free(string_entry->str); // Free the dynamically allocated string
+  free(string_entry);      // Free the structure itself
+}
+
+static void add_string_to_hashtable2(hashtable_t *ht, const char *str) {
+  string_entry2_t *entry = malloc(sizeof(string_entry2_t));
+  size_t str_len = strlen(str);
+  entry->str = malloc(str_len + 1);
+  memcpy(entry->str, str, str_len + 1); // dup str
+  uint32_t key = hash_time33(str, str_len);
+  hashtable_add(ht, &entry->node, key);
+}
+
+static int delete_string_from_hashtable2(hashtable_t *ht, const char *str) {
+  uint32_t key = hash_time33(str, strlen(str));
+  uint32_t bkt = hash_32(key, ht->bits);
+  struct hlist_node *tmp;
+  string_entry2_t *cur;
+
+  hlist_for_each_entry_safe(cur, tmp, &ht->table[bkt], node) {
+    if (strcmp(cur->str, str) == 0) {
+      hlist_del(&cur->node);
+      free_string_entry2(cur);
+      return 0; // deleted
+    }
+  }
+  return 1; // not found
+}
+
+static int do_hashtable_stuff3(uint8_t bits, float density, float print_freq_density) {
+  hashtable_t *ht = create_hashtable(bits, free_string_entry2);
+  if (!ht) {
+    perror("Failed to create hashtable");
+    return 1;
+  }
+
+  // create random strings
+  for (int i = 0; i < (1 << bits) / 2; i++) {
+    char random_str[20];
+    sprintf(random_str, "string_%d", rand());
+    add_string_to_hashtable2(ht, random_str);
+  }
+
+  // add test str
+  add_string_to_hashtable2(ht, "test_string_1");
+  add_string_to_hashtable2(ht, "test_string_2");
+
+  // list entries
+  uint32_t bkt = 0;
+  string_entry2_t *cur;
+  hash_for_each_bits(ht->table, ht->bits, bkt, cur, node) {
+    printf("bkt: %u string: %s\n", bkt, cur->str);
+  }
+
+  // print test str
+  char *found_str = find_string_in_hashtable(ht, "test_string_1");
+  if (found_str) printf("Found: %s\n", found_str);
+
+  found_str = find_string_in_hashtable(ht, "test_string_2");
+  if (found_str) printf("Found: %s\n", found_str);
+
+  printf("collisions: %zu\n", count_hashtable_collisions(ht));
+  printf("entries:    %zu\n", count_hashtable_entries(ht));
+
+  printf("deleting: %s\n", "test_string_1");
+  int ret = 1;
+  ret = delete_string_from_hashtable2(ht, "test_string_1");
+  printf("delete result: %s\n", ret ? "failed" : "ok");
+
+  found_str = find_string_in_hashtable(ht, "test_string_1");
+  if (!found_str) printf("NOT Found: %s as expected\n", "test_string_1");
+
+  FREE_HASHTABLE(ht, string_entry_t, node, free_string_entry2);
+
   return 0;
 }
 
@@ -402,5 +490,6 @@ int main(int argc, char *argv[]) {
 
   do_hashtable_stuff(bits, density, print_freq_density);
   do_hashtable_stuff2(bits, density, print_freq_density);
+  do_hashtable_stuff3(bits, density, print_freq_density);
   return 0;
 }

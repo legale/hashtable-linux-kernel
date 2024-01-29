@@ -2,8 +2,9 @@
  * Simple deque structure implementation
  * (C) 2022  Isaev Ruslan <legale.legale@gmail.com>
  */
-#include "deque.h"
 #include <stdlib.h>
+
+#include "deque.h"
 
 void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *entry) {
   if (max_items && name->size == max_items) {

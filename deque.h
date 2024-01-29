@@ -6,8 +6,8 @@
 #ifndef __DEQUE_H__
 #define __DEQUE_H__
 #include <stdint.h>
-
 #include <stdbool.h>
+
 #include "list.h"
 #include "hashtable.h"
 
