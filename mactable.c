@@ -54,5 +54,6 @@ void mactable_free(struct hlist_head *tbl, uint32_t bits) {
         if (cur->hostname) free((void *)cur->hostname);
         free(cur);
     }
+    free(tbl);
 }
 

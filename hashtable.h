@@ -6,6 +6,8 @@
 #ifndef __HASHTABLE_H__
 #define __HASHTABLE_H__
 
+#include <stdlib.h>
+
 #include "array_size.h"
 #include "hash.h"
 #include "list.h"
@@ -45,13 +47,33 @@ typedef struct hashtable {
 
 #define DEFINE_HASHTABLE(name, bits)    \
   struct hlist_head name[1 << (bits)] = \
-      {[0 ...((1 << (bits)) - 1)] = HT_HLIST_HEAD_INIT}
+      {[0 ...((1 << (bits)) - 1)] = HLIST_HEAD_INIT}
 
 #define DECLARE_HASHTABLE(name, bits) \
   struct hlist_head name[1 << (bits)]
 
 #define HASH_SIZE(name) (ARRAY_SIZE(name))
 #define HASH_BITS(name) ilog2(HASH_SIZE(name))
+
+/**
+ * Calculates the remainder of dividing 'num' by a power of two 'divisor'.
+ *
+ * This function efficiently computes the remainder of the division of 'num' by 'divisor',
+ * where 'divisor' is expected to be a power of two. The calculation exploits the fact that
+ * for powers of two, the remainder operation can be performed using a bitwise AND operation
+ * with 'divisor' - 1. This method is significantly faster than the standard division operation.
+ *
+ * It is important to ensure that the 'divisor' is indeed a power of two, as the behavior is
+ * undefined for non-power-of-two divisors. The function uses an assertion to validate this
+ * precondition.
+ *
+ * @param num The dividend in the division operation.
+ * @param divisor The divisor, which must be a power of two.
+ * @return The remainder of 'num' divided by 'divisor'.
+ */
+static inline int calc_bkt(int num, int divisor) {
+  return num & (divisor - 1);
+}
 
 /**
  * create_hashtable - Create and initialize a new hash table
@@ -127,7 +149,7 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
  * DECLARE_HASHTABLE(my_table, bits);
  * // ... [Initialization and usage of my_table] ...
  * CLEAR_HASHTABLE_BITS(my_table, bits, struct my_data_type, my_hlist_node, my_data_type_free_func);
- * 
+ *
  */
 #define CLEAR_HASHTABLE_BITS(tbl, bits, struct_type, node_member, free_func)                         \
   do {                                                                                               \
@@ -168,11 +190,11 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
  *
  * hashtable_t *my_hashtable = create_hashtable(bits, free_string_entry);
  * // ... [ usage of my_hashtable] ...
- * 
+ *
  * // free all ht entries, ht itself and my_hashtable container.
  * FREE_HASHTABLE(&my_hashtable, struct my_data_type, my_hlist_node, custom_free_func);
  */
-#define FREE_HASHTABLE(ht, struct_type, node_member, free_func)                        \
+#define FREE_HASHTABLE(ht, struct_type, node_member, free_func)                         \
   do {                                                                                  \
     CLEAR_HASHTABLE_BITS((ht)->table, (ht)->bits, struct_type, node_member, free_func); \
     free((ht)->table);                                                                  \
@@ -281,10 +303,10 @@ static inline void __hash_init(struct hlist_head *ht, unsigned int sz) {
  * @key: the key of the object to be added
  */
 #define hash_add(hashtable, node, key) \
-  hlist_add_head(node, &hashtable[hash_32(key, HASH_BITS(hashtable))])
+  hlist_add_head(node, &hashtable[calc_bkt(key, 1 << (bits))])
 
 #define hash_add_bits(hashtable, bits, node, key) \
-  hlist_add_head(node, &hashtable[hash_32(key, bits)])
+  hlist_add_head(node, &hashtable[calc_bkt(key, 1 << (bits))])
 
 /**
  * hash_hashed - check whether an object is in any hashtable
@@ -366,10 +388,10 @@ static inline void hash_del(struct hlist_node *node) {
  * @key: the key of the objects to iterate over
  */
 #define hash_for_each_possible(name, obj, member, key) \
-  hlist_for_each_entry(obj, &name[hash_32(key, HASH_BITS(name))], member)
+  hlist_for_each_entry(obj, &name[calc_bkt(key, 1 << HASH_BITS(name))], member)
 
 #define hash_for_each_possible_bits(name, hash_bits, obj, member, key) \
-  hlist_for_each_entry(obj, &name[hash_32(key, hash_bits)], member)
+  hlist_for_each_entry(obj, &name[calc_bkt(key, 1 << (hash_bits))], member)
 
 /**
  * hash_for_each_possible_safe - iterate over all possible objects hashing to the
@@ -382,6 +404,6 @@ static inline void hash_del(struct hlist_node *node) {
  */
 #define hash_for_each_possible_safe(name, obj, tmp, member, key) \
   hlist_for_each_entry_safe(obj, tmp,                            \
-                            &name[hash_32(key, HASH_BITS(name))], member)
+                            &name[calc_bkt(key, 1 << HASH_BITS(name))], member)
 
 #endif
