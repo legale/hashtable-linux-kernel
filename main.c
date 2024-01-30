@@ -159,7 +159,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
 
   // DEQ_POP AND PUSH TEST
   {
-    deq_s *item;
+    deq_entry_s *item;
     deq_pop(&deq, &item);
     mac_node_s *node = item->data;
     printf("deq_pop and deq_push popped item again\n");
@@ -172,7 +172,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   }
 
   {
-    deq_s *item;
+    deq_entry_s *item;
     deq_pop_tail(&deq, &item);
     mac_node_s *node = item->data;
     uint8_t *m = node->mac;
@@ -186,7 +186,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   {
     printf("Listing deque entries (%u):\n", deq.size);
     cnt = 0;
-    deq_s *item;
+    deq_entry_s *item;
     DEQ_FOR_EACH(deq, item, list) {
       uint8_t *m = ((mac_node_s *)(item->data))->mac;
       struct in_addr *ip = &(((mac_node_s *)(item->data))->ip);

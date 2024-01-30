@@ -6,15 +6,23 @@
 
 #include "deque.h"
 
-void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *entry) {
+deq_entry_s *deque_create(void){
+  deq_entry_s *deq = malloc(sizeof(list_head_s));
+  if(!deq) return NULL;
+  INIT_LIST_HEAD(&deq->list);
+  return deq;
+}
+
+
+void _deq_push(deq_s *name, bool push_tail_flag, uint32_t max_items, void *entry) {
   if (max_items && name->size == max_items) {
-    deq_s *item = list_entry(name->list.next, deq_s, list);
+    deq_entry_s *item = list_entry(name->list.next, deq_entry_s, list);
     list_del(name->list.next);
     free(item);
   } else {
     ++name->size;
   }
-  deq_s *deq_item = (deq_s *)malloc(sizeof(deq_s));
+  deq_entry_s *deq_item = (deq_entry_s *)malloc(sizeof(deq_entry_s));
   deq_item->data = entry;
 
   if (push_tail_flag) {
@@ -24,33 +32,33 @@ void _deq_push(deq_head_s *name, bool push_tail_flag, uint32_t max_items, void *
   }
 }
 
-void deq_push_tail(deq_head_s *name, uint32_t max_items, void *entry) {
+void deq_push_tail(deq_s *name, uint32_t max_items, void *entry) {
   _deq_push(name, true, max_items, entry);
 }
 
-void deq_push(deq_head_s *name, uint32_t max_items, void *entry) {
+void deq_push(deq_s *name, uint32_t max_items, void *entry) {
   _deq_push(name, false, max_items, entry);
 }
 
-bool deq_isempty(deq_head_s *name) {
+bool deq_isempty(deq_s *name) {
   return name->size == 0 ? 1 : 0;
 }
 
-void deq_free(deq_head_s *name) {
-  deq_s *item, *tmp;
+void deq_free(deq_s *name) {
+  deq_entry_s *item, *tmp;
   list_for_each_entry_safe(item, tmp, &name->list, list) {
     free(item);
   }
 }
 
-void deq_pop(deq_head_s *name, deq_s **item) {
-  *item = list_entry(name->list.next, deq_s, list);
+void deq_pop(deq_s *name, deq_entry_s **item) {
+  *item = list_entry(name->list.next, deq_entry_s, list);
   list_del(name->list.next);
   --name->size;
 }
 
-void deq_pop_tail(deq_head_s *name, deq_s **item) {
-  *item = list_entry(name->list.prev, deq_s, list);
+void deq_pop_tail(deq_s *name, deq_entry_s **item) {
+  *item = list_entry(name->list.prev, deq_entry_s, list);
   list_del(name->list.prev);
   --name->size;
 }

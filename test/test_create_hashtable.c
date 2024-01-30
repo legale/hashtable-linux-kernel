@@ -4,7 +4,6 @@
 #include "unity.h"
 
 void setUp(void) {}
-
 void tearDown(void) {}
 
 typedef struct string_entry {
@@ -85,7 +84,7 @@ void test_add_to_ht(void) {
 
   string_entry_t *entry = malloc(sizeof(string_entry_t));
   entry->str = malloc(sizeof(TEST_STRING) + 1);
-  memcpy(entry->str, TEST_STRING, sizeof(TEST_STRING) + 1);
+  memcpy(entry->str, TEST_STRING, sizeof(TEST_STRING));
   uint32_t key = hash_time33(entry->str, sizeof(TEST_STRING));
   hashtable_add(ht, &entry->node, key);
 
