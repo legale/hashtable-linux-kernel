@@ -164,6 +164,52 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
   } while (0)
 
 /**
+ * COUNT_ENTRIES_IN_HASHTABLE - count the number of entries in a hash table
+ * @ht: Pointer to the hash table
+ * @type: The type of the structures stored in the hash table
+ * @node: The name of the hlist_node member within the type
+ * @count: Variable to store the count of entries
+ *
+ * This macro is used for iterating over a hash table to count the total number
+ * of entries it contains. It leverages the hash_for_each_bits macro to iterate
+ * over every bucket and every entry within those buckets in the hash table, 
+ * incrementing the count for each found entry.
+ *
+ * The macro is designed to be flexible and can work with any type of struct
+ * that contains an hlist_node, allowing for easy integration into existing 
+ * hash table implementations without requiring specific function implementations
+ * for counting.
+ *
+ * The count result is stored in the variable passed as the @count argument,
+ * which must be of size_t type to ensure it can hold the total number of entries
+ * without overflow.
+ *
+ * Note: It is the caller's responsibility to ensure that the hash table and
+ * the count variable are properly initialized before using this macro.
+ *
+ * Usage Example:
+ *
+ * struct my_struct {
+ *     int id;
+ *     struct hlist_node node;
+ * };
+ *
+ * hashtable_t my_hashtable; // Assume this is already initialized and populated
+ * size_t my_entries_count;
+ * COUNT_ENTRIES_IN_HASHTABLE(&my_hashtable, my_struct, node, my_entries_count);
+ * printf("The hash table contains %zu entries.\n", my_entries_count);
+ *
+ */
+#define COUNT_ENTRIES_IN_HASHTABLE(ht, type, node, count) do { \
+    count = 0; \
+    uint32_t bkt; \
+    type *cur; \
+    hash_for_each_bits(ht->table, ht->bits, bkt, cur, node) { \
+        count++; \
+    } \
+} while(0)
+
+/**
  * FREE_HASHTABLE - safely clear and free all elements in a hash table encapsulated within a hashtable_t structure
  * @ht: Pointer to the hashtable_t structure containing the hash table and its size
  * @struct_type: The type of the structures stored in the hash table

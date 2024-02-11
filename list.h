@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_LIST_H_
-#define _LINUX_LIST_H_
+#ifndef _LINUX_K_LIST_H_
+#define _LINUX_K_LIST_H_
 
 #include "types.h"
 #include "compiler.h"
@@ -19,10 +19,10 @@
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
-#define LIST_HEAD(name) \
-	struct list_head name = LIST_HEAD_INIT(name)
+#define K_LIST_HEAD(name) \
+	struct list_head name = K_LIST_HEAD_INIT(name)
 
-static inline void INIT_LIST_HEAD(struct list_head *list)
+static inline void K_INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;
 	list->prev = list;
@@ -133,7 +133,7 @@ static inline void list_replace_init(struct list_head *old,
 					struct list_head *new)
 {
 	list_replace(old, new);
-	INIT_LIST_HEAD(old);
+	K_INIT_LIST_HEAD(old);
 }
 
 /**
@@ -143,7 +143,7 @@ static inline void list_replace_init(struct list_head *old,
 static inline void list_del_init(struct list_head *entry)
 {
 	__list_del_entry(entry);
-	INIT_LIST_HEAD(entry);
+	K_INIT_LIST_HEAD(entry);
 }
 
 /**
@@ -266,7 +266,7 @@ static inline void list_cut_position(struct list_head *list,
 		(head->next != entry && head != entry))
 		return;
 	if (entry == head)
-		INIT_LIST_HEAD(list);
+		K_INIT_LIST_HEAD(list);
 	else
 		__list_cut_position(list, head, entry);
 }
@@ -321,7 +321,7 @@ static inline void list_splice_init(struct list_head *list,
 {
 	if (!list_empty(list)) {
 		__list_splice(list, head, head->next);
-		INIT_LIST_HEAD(list);
+		K_INIT_LIST_HEAD(list);
 	}
 }
 
@@ -338,7 +338,7 @@ static inline void list_splice_tail_init(struct list_head *list,
 {
 	if (!list_empty(list)) {
 		__list_splice(list, head->prev, head);
-		INIT_LIST_HEAD(list);
+		K_INIT_LIST_HEAD(list);
 	}
 }
 
@@ -780,4 +780,4 @@ static inline void list_del_range(struct list_head *begin,
 #define list_for_each_from(pos, head) \
 	for (; pos != (head); pos = pos->next)
 
-#endif /* _LINUX_LIST_H_ */
+#endif /* _LINUX_K_LIST_H_ */

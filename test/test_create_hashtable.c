@@ -123,10 +123,50 @@ void test_delete_string_from_hashtable(void) {
   FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
 }
 
+void test_add_and_delete_entries(void) {
+    hashtable_t *ht = create_hashtable(10, free_entry); 
+    TEST_ASSERT_NOT_NULL(ht);
+
+    size_t entries_before, entries_after, entries_count;
+    const int num_entries = 1000;
+    char str_buffer[40];
+
+    // add entries to ht
+    for (int i = 0; i < num_entries; i++) {
+        snprintf(str_buffer, sizeof(str_buffer), "string%d", i);
+        add_string_to_hashtable(ht, str_buffer);
+    }
+
+    // count entries and check
+    COUNT_ENTRIES_IN_HASHTABLE(ht, string_entry_t, node, entries_count);
+    TEST_ASSERT_EQUAL_UINT32(num_entries, entries_count);
+
+    // delete entries and check
+    for (int i = 0; i < num_entries; i++) {
+        snprintf(str_buffer, sizeof(str_buffer), "string%d", i);
+
+        // count entries before deletion
+        COUNT_ENTRIES_IN_HASHTABLE(ht, string_entry_t, node, entries_before);
+
+        int delete_result = delete_string_from_hashtable(ht, str_buffer);
+        TEST_ASSERT_EQUAL_INT(0, delete_result); // ok
+
+        // count entries after deletion
+        COUNT_ENTRIES_IN_HASHTABLE(ht, string_entry_t, node, entries_after);
+
+        // check 
+        TEST_ASSERT_EQUAL_UINT32(entries_before - 1, entries_after);
+    }
+
+    // free ht entries and ht itself
+    FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_create_hashtable);
   RUN_TEST(test_add_to_ht);
   RUN_TEST(test_delete_string_from_hashtable);
+	RUN_TEST(test_add_and_delete_entries);
   return UNITY_END();
 }

@@ -26,7 +26,7 @@ typedef struct deq_entry {
 #define DEFINE_DEQ(name)\
     deq_s name;\
     name.size = 0;\
-    INIT_LIST_HEAD(&name.list);\
+    K_INIT_LIST_HEAD(&name.list);\
 
 #define DEQ_PUSH_TAIL(name, max_items, entry)\
 {\

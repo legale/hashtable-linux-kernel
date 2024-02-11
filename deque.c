@@ -9,7 +9,7 @@
 deq_entry_s *deque_create(void){
   deq_entry_s *deq = malloc(sizeof(list_head_s));
   if(!deq) return NULL;
-  INIT_LIST_HEAD(&deq->list);
+  K_INIT_LIST_HEAD(&deq->list);
   return deq;
 }
 
