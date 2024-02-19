@@ -2,8 +2,21 @@
 
 #include "assoc_array.h"
 
+static int fill_assoc_array_entry(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size) {
+  entry->key = malloc(key_size);
+  if (entry->key) {
+    memcpy(entry->key, key, key_size); // Copy the key
+    entry->key_size = key_size;        // Set the key size
+    entry->data = data;                // Assign the data
+    return 0;
+  }
+  return 1;
+}
+
 // Function to create and initialize a new associative array
-assoc_array_t *array_create(uint32_t bits, void (*free_entry)(void *)) {
+assoc_array_t *
+array_create(uint32_t bits, void (*free_entry)(void *),
+             int (*fill_entry)(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size)) {
   // Allocate memory for the associative array structure
   assoc_array_t *arr = malloc(sizeof(assoc_array_t));
   if (!arr) {
@@ -27,6 +40,11 @@ assoc_array_t *array_create(uint32_t bits, void (*free_entry)(void *)) {
 
   // Set the free_entry callback
   arr->free_entry = free_entry;
+  if (fill_entry) {
+    arr->fill_entry = fill_entry;
+  } else {
+    arr->fill_entry = fill_assoc_array_entry;
+  }
 
   return arr; // Return the newly created associative array
 }
@@ -51,32 +69,26 @@ assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key
 }
 
 int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
+  int ret;
   assoc_array_entry_t *new_entry = malloc(sizeof(assoc_array_entry_t));
   if (!new_entry) {
     return -1; // Memory allocation failed
   }
 
-  new_entry->key = malloc(key_size);
-  if (!new_entry->key) {
+  ret = arr->fill_entry(new_entry, data, key, key_size);
+  if (ret) {
     free(new_entry);
-    return -1; // Memory allocation failed for key
+    return -1; // Memory allocation failed
   }
 
-  memcpy(new_entry->key, key, key_size); // Copy the key
-  new_entry->key_size = key_size;        // Set the key size
-
-  new_entry->data = data; // Assign the data
-
-  int hash_key = hash_time33(key, key_size); // Generate a hash for the key
-
+  int hash_key = hash_time33(key, key_size);           // Generate a hash for the key
   hashtable_add(arr->ht, &new_entry->hnode, hash_key); // Add to the hash table
-
-  list_add_tail(&new_entry->lnode, &arr->list); // Add to the end of the list
-
-  arr->size++; // Increment the size
+  list_add_tail(&new_entry->lnode, &arr->list);        // Add to the end of the list
+  arr->size++;                                         // Increment the size
 
   return 0; // Success
 }
+
 int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
   assoc_array_entry_t *existing_entry = array_get_by_key(arr, key, key_size);
 

@@ -77,7 +77,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
 
   // hashtable current node and tmp var for use with _safe macro
   struct hlist_node *tmp;
-  mac_node_s *cur;
+  mac_node_t *cur;
 
   /*
    * example: struct hlist_head tbl[1 << (bits)];
@@ -104,7 +104,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   // Insert the elements.
   int cnt = cnt_init;
   while (cnt--) {
-    cur = (mac_node_s *)calloc(1, sizeof(mac_node_s));
+    cur = (mac_node_t *)calloc(1, sizeof(mac_node_t));
     generate_ipv4(&cur->ip);
     generate_mac((uint8_t *)&cur->mac);
     key = hash_time33((const char *)cur->mac, IFHWADDRLEN);
@@ -160,7 +160,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   // DEQ_POP AND PUSH TEST
   {
     deq_entry_t *item = deq_pop_head(&deq);
-    mac_node_s *node = item->data;
+    mac_node_t *node = item->data;
     printf("deq_pop and deq_push popped item again\n");
     deq_push_head(&deq, (void *)node);
     uint8_t *m = node->mac;
@@ -172,7 +172,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
 
   {
     deq_entry_t *item = deq_pop_tail(&deq);
-    mac_node_s *node = item->data;
+    mac_node_t *node = item->data;
     uint8_t *m = node->mac;
     printf("DEQ_POP_TAIL popped entry: %02X:%02X:%02X:%02X:%02X:%02X\n",
            m[0], m[1], m[2], m[3], m[4], m[5]);
@@ -186,8 +186,8 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
     cnt = 0;
     deq_entry_t *item;
     DEQ_FOR_EACH(deq, item, list) {
-      uint8_t *m = ((mac_node_s *)(item->data))->mac;
-      struct in_addr *ip = &(((mac_node_s *)(item->data))->ip);
+      uint8_t *m = ((mac_node_t *)(item->data))->mac;
+      struct in_addr *ip = &(((mac_node_t *)(item->data))->ip);
       printf("%u %02X:%02X:%02X:%02X:%02X:%02X %s\n",
              cnt++,
              m[0], m[1], m[2], m[3], m[4], m[5],
@@ -221,7 +221,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
         uint8_t *m = cur->mac;
         printf("test deletion mac: %02X:%02X:%02X:%02X:%02X:%02X\n", m[0], m[1], m[2], m[3], m[4], m[5]);
 
-        mac_node_s *found = get_by_mac_first_found(tbl, hash_bits, m);
+        mac_node_t *found = get_by_mac_first_found(tbl, hash_bits, m);
         if (found) {
           printf("get by mac found: %u ip: %s\n", key, inet_ntoa(found->ip));
           hash_del(&found->node);

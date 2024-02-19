@@ -38,6 +38,13 @@ int __ilog2_u32(int n)
 	return fls(n) - 1;
 }
 
+static __always_inline __attribute__((const))
+int __ilog2_u64(u64 n)
+{
+	return fls(n) - 1;
+}
+
+
 /*
  *  Determine whether some value is a power of two, where zero is
  * *not* considered a power of two.

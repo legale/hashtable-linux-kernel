@@ -14,14 +14,17 @@ typedef struct array_entry {
 } assoc_array_entry_t;
 
 typedef struct array_struct {
-  hashtable_t *ht;             // the hash table
-  struct list_head list;      // Head of the doubly linked list for accessing first and last items
-  size_t size;                // Current number of elements in the array
-  void (*free_entry)(void *); // cb function to free entry memory
+  hashtable_t *ht;                                                                        // the hash table
+  struct list_head list;                                                                  // Head of the doubly linked list for accessing first and last items
+  size_t size;                                                                            // Current number of elements in the array
+  void (*free_entry)(void *);                                                             // cb function to free entry memory
+  int (*fill_entry)(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size); // cb function to fill entry
 } assoc_array_t;
 
 // Functions for array operations
-assoc_array_t *array_create(uint32_t bits, void (*free_entry)(void *));
+assoc_array_t *
+array_create(uint32_t bits, void (*free_entry)(void *),
+             int (*fill_entry)(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size));
 int array_free(assoc_array_t *arr);
 
 int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size);

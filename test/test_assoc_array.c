@@ -25,7 +25,7 @@ void free_entry(void *entry) {
 
 void test_array_create(void) {
   uint32_t bits = 10;
-  arr = array_create(bits, free_entry);
+  arr = array_create(bits, free_entry, NULL);
 
   TEST_ASSERT_NOT_NULL(arr); // Check if the array was successfully created
 
@@ -86,7 +86,7 @@ void test_array_del(void) {
 
 void test_array_add_replace(void) {
   int ret;
-  arr = array_create(10, free_entry);
+  arr = array_create(10, free_entry, NULL);
   TEST_ASSERT_NOT_NULL(arr);
 
   data = malloc(strlen("initial_data") + 1); // +1 for null terminator
@@ -124,7 +124,7 @@ void test_array_add_replace(void) {
 
 void test_array_fill_and_half_delete(void) {
   uint32_t bits = 10; // Create an array with a specific capacity
-  arr = array_create(bits, free_entry);
+  arr = array_create(bits, free_entry, NULL);
   TEST_ASSERT_NOT_NULL(arr);
 
   int capacity = 1 << bits;         // Calculate the actual capacity based on bits
@@ -174,7 +174,7 @@ void test_array_fill_and_half_delete(void) {
 
 void test_array_get_first_get_last_with_multiple_entries(void) {
   // Create a new associative array
-  arr = array_create(10, free_entry);
+  arr = array_create(10, free_entry, NULL);
   TEST_ASSERT_NOT_NULL(arr);
 
   char key[30];                // Buffer for the key

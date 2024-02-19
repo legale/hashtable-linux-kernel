@@ -20,7 +20,7 @@ OBJS_LIB := $(SRC_LIB:%.c=$(BD)/%.o)
 
 # Test setup
 UNITY_ROOT = ./unity
-TEST_SRCS := test/test_deque.c test/test_hashtable.c test/test_assoc_array.c
+TEST_SRCS := test/test_deque.c test/test_hashtable.c test/test_assoc_array.c test/test_assoc_array_net_data.c
 UNITY_SRC := $(UNITY_ROOT)/src/unity.c
 UNITY_OBJ := $(UNITY_SRC:%.c=$(BD)/%.o)
 TEST_OBJS := $(TEST_SRCS:%.c=$(BD)/%.o)
