@@ -31,4 +31,11 @@ int array_del(assoc_array_t *arr, void *key, uint8_t key_size);
 assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key_size);
 assoc_array_entry_t *array_get_head_entry(assoc_array_t *arr);
 assoc_array_entry_t *array_get_tail_entry(assoc_array_t *arr);
+
+assoc_array_entry_t *array_get_first(assoc_array_t *arr);
+assoc_array_entry_t *array_get_last(assoc_array_t *arr);
+
+int array_del_first(assoc_array_t *arr);
+int array_del_last(assoc_array_t *arr);
+
 #endif // ASSOC_ARRAY_H

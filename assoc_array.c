@@ -106,3 +106,49 @@ int array_free(assoc_array_t *arr) {
 
   return 0; // Successful resource release
 }
+
+static assoc_array_entry_t *_array_get_first(assoc_array_t *arr, bool is_first) {
+  if (arr == NULL || list_empty(&arr->list) || arr->size == 0) return NULL;
+  if (is_first) {
+    return list_first_entry(&arr->list, assoc_array_entry_t, lnode);
+  } else {
+    return list_last_entry(&arr->list, assoc_array_entry_t, lnode);
+  }
+}
+
+assoc_array_entry_t *array_get_first(assoc_array_t *arr) {
+  return _array_get_first(arr, true);
+}
+
+assoc_array_entry_t *array_get_last(assoc_array_t *arr) {
+  return _array_get_first(arr, false);
+}
+
+static int _array_del_first(assoc_array_t *arr, bool is_first) {
+  if (arr == NULL || list_empty(&arr->list) || arr->size == 0) return -1;
+  assoc_array_entry_t *e;
+  if (is_first) {
+    e = list_first_entry(&arr->list, assoc_array_entry_t, lnode);
+  } else {
+    e = list_last_entry(&arr->list, assoc_array_entry_t, lnode);
+  }
+  if (e == NULL) return -1;
+
+  // delete from ht and list
+  hlist_del(&e->hnode);
+  list_del(&e->lnode);
+
+  // free entry and decrease size
+  arr->free_entry(e);
+  arr->size--;
+
+  return 0;
+}
+
+int array_del_first(assoc_array_t *arr) {
+  return _array_del_first(arr, true);
+}
+
+int array_del_last(assoc_array_t *arr) {
+  return _array_del_first(arr, false);
+}

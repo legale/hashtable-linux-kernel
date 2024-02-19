@@ -172,6 +172,41 @@ void test_array_fill_and_half_delete(void) {
   test_array_free_non_empty();
 }
 
+void test_array_get_first_get_last_with_multiple_entries(void) {
+  // Create a new associative array
+  arr = array_create(10, free_entry);
+  TEST_ASSERT_NOT_NULL(arr);
+
+  char key[30];                // Buffer for the key
+  char data_prefix[] = "data"; // Prefix for data values
+  char *data_entries[20];      // Array to store pointers to data strings
+  uint8_t key_size;
+
+  // Add 20 elements to the array
+  for (int i = 0; i < 20; ++i) {
+    snprintf(key, sizeof(key), "key%d", i); // Generating the key
+    key_size = strlen(key) + 1;             // Calculating the key size including the null terminator
+
+    // Allocating memory for data and generating data string
+    data_entries[i] = malloc(strlen(data_prefix) + 10);
+    snprintf(data_entries[i], strlen(data_prefix) + 10, "%s%d", data_prefix, i);
+
+    // Adding the element to the array
+    array_add(arr, data_entries[i], key, key_size);
+  }
+
+  // Retrieve the first element and verify it
+  assoc_array_entry_t *first_entry = array_get_first(arr);
+  TEST_ASSERT_NOT_NULL(first_entry);
+  assoc_array_entry_t *last_entry = array_get_last(arr);
+  TEST_ASSERT_NOT_NULL(last_entry);
+  // Verifying that the data of the first element matches the expected
+  TEST_ASSERT_EQUAL_STRING(data_entries[0], first_entry->data);
+  TEST_ASSERT_EQUAL_STRING(data_entries[19], last_entry->data);
+
+  array_free(arr);
+}
+
 int main(void) {
   UNITY_BEGIN();
   RUN_TEST(test_array_create);
@@ -184,6 +219,8 @@ int main(void) {
   RUN_TEST(test_array_del);
   RUN_TEST(test_array_add_replace);
   RUN_TEST(test_array_fill_and_half_delete);
+  RUN_TEST(test_array_get_first_get_last_with_multiple_entries);
+	
 
   return UNITY_END();
 }
