@@ -128,17 +128,20 @@ int main(int argc, char *argv[]) {
   argv0 = *argv; // Set program name for usage output
 
   // Parse command line arguments
-  while (argc > 1) {
+  
+	while (argc > 1) {
     NEXT_ARG();
     if (matches(*argv, "-h") || matches(*argv, "--help")) {
       usage();
-    } else {
+    }
+		bits = atoi(*argv);
+    if (NEXT_ARG_OK()) {
       NEXT_ARG();
-      if (NEXT_ARG_OK()) bits = atoi(*argv);
+      density = atof(*argv);
+    }
+    if (NEXT_ARG_OK()) {
       NEXT_ARG();
-      if (NEXT_ARG_OK()) bits = density = atof(*argv);
-      NEXT_ARG();
-      if (NEXT_ARG_OK()) bits = print_freq_density = atof(*argv);
+      print_freq_density = atof(*argv);
     }
   }
 
@@ -148,10 +151,15 @@ int main(int argc, char *argv[]) {
 }
 
 int run_example_code(int bits, float density, float print_freq_density) {
-  // Initialize the associative array with the specified number of bits for indexing
+  // Initialize the associative array
   assoc_array_t *arr = array_create(bits, free_entry, fill_entry);
   mac_node_t *node;
   assoc_array_entry_t *e;
+  int print_divisor = 1;
+  if (print_freq_density > 0) {
+    print_divisor = 1.0 / print_freq_density;
+  }
+  printf("print_devisor: %d\n", print_divisor);
 
   // Calculate the number of entries to add based on the specified density
   int entries_to_add = (1 << bits) * density;
@@ -167,10 +175,10 @@ int run_example_code(int bits, float density, float print_freq_density) {
 
     // Add the node to the associative array using its MAC address as the key
     array_add_replace(arr, node, node->mac, IFHWADDRLEN);
-    if (i == 0){
-		  printf("first added entry:\n");
-			print_mac_node(node);
-		}
+    if ((i % print_divisor) == 0) {
+      printf("entry %d:\n", i);
+      print_mac_node(node);
+    }
   }
 
   // Retrieve and delete the last entry as an example
