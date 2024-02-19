@@ -4,8 +4,7 @@
 
 #include "hashtable.h"
 
-hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *)) {
-  if(!free_entry) return NULL;
+hashtable_t *ht_create(uint32_t bits) {
   hashtable_t *ht = malloc(sizeof(hashtable_t));
   if (!ht) return NULL;
 
@@ -17,6 +16,5 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *)) {
   }
 
   hashtable_init(ht);
-  ht->free_entry = free_entry;
   return ht;
 }

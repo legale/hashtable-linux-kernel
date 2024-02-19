@@ -20,8 +20,8 @@ typedef struct mac_node {
 } mac_node_s;
 
 mac_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);    
-uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
-mac_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key);
+int count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]);
+mac_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, int key);
 void mactable_free(struct hlist_head *tbl, uint32_t bits);
 
 #endif /*_MACTABLE_H */

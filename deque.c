@@ -6,24 +6,18 @@
 
 #include "deque.h"
 
-deq_entry_s *deque_create(void){
-  deq_entry_s *deq = malloc(sizeof(list_head_s));
+deq_t *deque_create(void){
+  deq_t *deq = malloc(sizeof(deq_t));
   if(!deq) return NULL;
   K_INIT_LIST_HEAD(&deq->list);
   return deq;
 }
 
 
-void _deq_push(deq_s *name, bool push_tail_flag, uint32_t max_items, void *entry) {
-  if (max_items && name->size == max_items) {
-    deq_entry_s *item = list_entry(name->list.next, deq_entry_s, list);
-    list_del(name->list.next);
-    free(item);
-  } else {
-    ++name->size;
-  }
-  deq_entry_s *deq_item = (deq_entry_s *)malloc(sizeof(deq_entry_s));
-  deq_item->data = entry;
+void _deq_push(deq_t *name, bool push_tail_flag, void *data) {
+	++name->size;
+  deq_entry_t *deq_item = (deq_entry_t *)malloc(sizeof(deq_entry_t));
+  deq_item->data = data;
 
   if (push_tail_flag) {
     list_add_tail(&deq_item->list, &name->list);
@@ -32,33 +26,70 @@ void _deq_push(deq_s *name, bool push_tail_flag, uint32_t max_items, void *entry
   }
 }
 
-void deq_push_tail(deq_s *name, uint32_t max_items, void *entry) {
-  _deq_push(name, true, max_items, entry);
+void deq_push_tail(deq_t *name, void *data) {
+  return _deq_push(name, true, data);
 }
 
-void deq_push(deq_s *name, uint32_t max_items, void *entry) {
-  _deq_push(name, false, max_items, entry);
+void deq_push_head(deq_t *name, void *data) {
+  return _deq_push(name, false, data);
 }
 
-bool deq_isempty(deq_s *name) {
+bool deq_isempty(deq_t *name) {
   return name->size == 0 ? 1 : 0;
 }
 
-void deq_free(deq_s *name) {
-  deq_entry_s *item, *tmp;
+void deq_free(deq_t *name) {
+  deq_entry_t *item, *tmp;
   list_for_each_entry_safe(item, tmp, &name->list, list) {
     free(item);
   }
+	free(name);
 }
 
-void deq_pop(deq_s *name, deq_entry_s **item) {
-  *item = list_entry(name->list.next, deq_entry_s, list);
-  list_del(name->list.next);
-  --name->size;
+deq_entry_t *_deq_pop(deq_t *deq, bool pop_from_tail) {
+    if (deq_isempty(deq)) { 
+        return NULL; // if deque is empty
+    }
+		deq_entry_t *item;
+		if(!pop_from_tail){
+    	item = list_entry(deq->list.next, deq_entry_t, list); // get first item
+    } else {
+	    item = list_entry(deq->list.prev, deq_entry_t, list); // get first item
+		}
+
+		list_del(&item->list); // delete item from list
+    --deq->size; // decrease deque size
+
+    return item; // return item
 }
 
-void deq_pop_tail(deq_s *name, deq_entry_s **item) {
-  *item = list_entry(name->list.prev, deq_entry_s, list);
-  list_del(name->list.prev);
-  --name->size;
+deq_entry_t *deq_pop_tail(deq_t *deq) {
+	return _deq_pop(deq, true);
+}
+
+deq_entry_t *deq_pop_head(deq_t *deq) {
+	return _deq_pop(deq, false);
+}
+
+
+deq_entry_t *_deq_get(deq_t *deq, bool peek_from_tail) {
+    if (deq_isempty(deq)) { 
+        return NULL; 
+    }
+    deq_entry_t *item;
+    if (!peek_from_tail) {
+        item = list_entry(deq->list.next, deq_entry_t, list); 
+    } else {
+        item = list_entry(deq->list.prev, deq_entry_t, list); 
+    }
+    
+    return item;
+}
+
+deq_entry_t *deq_get_head(deq_t *deq) {
+    return _deq_get(deq, false); 
+}
+
+deq_entry_t *deq_get_tail(deq_t *deq) {
+    return _deq_get(deq, true); 
 }

@@ -33,7 +33,7 @@ int ____ilog2_NaN(void);
  * - the arch is not required to handle n==0 if implementing the fallback
  */
 static inline __attribute__((const))
-int __ilog2_u32(uint32_t n)
+int __ilog2_u32(int n)
 {
 	return fls(n) - 1;
 }

@@ -4,7 +4,7 @@
 #include "list.h"
 #include "mactable.h"
 
-mac_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint32_t key) {
+mac_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, int key) {
   mac_node_s *current;
 
   hash_for_each_possible_bits(tbl, hash_bits, current, node, key) {
@@ -18,7 +18,7 @@ mac_node_s *get_by_key_first_found(struct hlist_head *tbl, uint8_t hash_bits, ui
 mac_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]) {
   if (tbl == NULL) return NULL;
   mac_node_s *cur;
-  uint32_t key = hash_time33((const char *)mac, IFHWADDRLEN);
+  int key = hash_time33((const char *)mac, IFHWADDRLEN);
 
   hash_for_each_possible_bits(tbl, hash_bits, cur, node, key) {
     if (memcmp(mac, cur->mac, IFHWADDRLEN) == 0) {
@@ -29,9 +29,9 @@ mac_node_s *get_by_mac_first_found(struct hlist_head *tbl, uint8_t hash_bits, ui
   return NULL;
 }
 
-uint32_t count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]) {
-  uint32_t cnt = 0;
-  uint32_t key = hash_time33((const char *)mac, IFHWADDRLEN);
+int count_by_mac(struct hlist_head *tbl, uint8_t hash_bits, uint8_t mac[IFHWADDRLEN]) {
+  int cnt = 0;
+  int key = hash_time33((const char *)mac, IFHWADDRLEN);
   mac_node_s *cur;
 
   hash_for_each_possible_bits(tbl, hash_bits, cur, node, key) {

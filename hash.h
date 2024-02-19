@@ -65,12 +65,12 @@
 #ifndef HAVE_ARCH__HASH_32
 #define __hash_32 __hash_32_generic
 #endif
-static inline uint32_t __hash_32_generic(uint32_t val)
+static inline int __hash_32_generic(int val)
 {
 	return val * GOLDEN_RATIO_32;
 }
 
-static inline uint32_t hash_32(uint32_t val, unsigned int bits)
+static inline int hash_32(int val, unsigned int bits)
 {
 	/* High bits are more random, so use them. */
 	return __hash_32(val) >> (32 - bits);
@@ -80,7 +80,7 @@ static inline uint32_t hash_32(uint32_t val, unsigned int bits)
 #define hash_64 hash_64_generic
 #endif
 static inline __attribute__((const))
-uint32_t hash_64_generic(uint64_t val, unsigned int bits)
+int hash_64_generic(uint64_t val, unsigned int bits)
 {
 #if __BITS_PER_LONG == 64
 	/* 64x64-bit multiply is efficient on all 64-bit processors */
@@ -91,20 +91,20 @@ uint32_t hash_64_generic(uint64_t val, unsigned int bits)
 #endif
 }
 
-static inline uint32_t hash_ptr(const void *ptr, unsigned int bits)
+static inline int hash_ptr(const void *ptr, unsigned int bits)
 {
 	return hash_long((unsigned long)ptr, bits);
 }
 
 /* This really should be called fold32_ptr; it does no hashing to speak of. */
-static inline uint32_t hash32_ptr(const void *ptr)
+static inline int hash32_ptr(const void *ptr)
 {
 	unsigned long val = (unsigned long)ptr;
 
 #if __BITS_PER_LONG == 64
 	val ^= (val >> 32);
 #endif
-	return (uint32_t)val;
+	return (int)val;
 }
 
 
@@ -112,9 +112,10 @@ static inline uint32_t hash32_ptr(const void *ptr)
 
 
 
-static inline uint32_t hash_jenkins( unsigned char *key, size_t len)
+static inline int hash_jenkins( unsigned char *key, size_t len)
 {
-    uint32_t hash, i;
+    int hash; 
+		size_t i;
     for(hash = i = 0; i < len; ++i)
     {
         hash += key[i];
@@ -160,9 +161,9 @@ static inline uint32_t hash_jenkins( unsigned char *key, size_t len)
  *                  -- Ralf S. Engelschall <rse@engelschall.com>
  */
 
-static inline uint32_t hash_time33(char const *str, int len)
+static inline int hash_time33(char const *str, int len)
 {
-    uint32_t hash = 5381;
+    int hash = 5381;
     /* Variant with the hash unrolled eight times */
     for (; len >= 8; len-= 8) {
         hash = ((hash << 5) + hash) + *str++;
@@ -191,9 +192,9 @@ static inline uint32_t hash_time33(char const *str, int len)
 }
 
 
-static inline uint32_t hash_fnv(const char *str, int len){
-	const uint32_t fnv_prime = 0x811C9DC5;
-	uint32_t hash = 0;
+static inline int hash_fnv(const char *str, int len){
+	const int fnv_prime = 0x811C9DC5;
+	int hash = 0;
 	int i = 0;
 
 	for (i = 0; i < len; str++, i++)

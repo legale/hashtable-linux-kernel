@@ -68,10 +68,10 @@ static void generate_ipv4(struct in_addr *ip) {
 static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_density) {
   printf("%s\n", __func__);
   // get hashtable size
-  uint32_t hash_bits = bits;
-  uint32_t table_size = 1 << hash_bits;
+  int hash_bits = bits;
+  int table_size = 1 << hash_bits;
   int cnt_init = table_size * density;
-  uint32_t printer = cnt_init * print_freq_density;
+  int printer = cnt_init * print_freq_density;
   printf("bits shift: %u hashtable size: %u, entries to write: %u print density: %f\n",
          hash_bits, table_size, cnt_init, print_freq_density);
 
@@ -96,7 +96,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   DEFINE_DEQ(deq)
 
   // hashtable key
-  uint32_t key = 0;
+  int key = 0;
 
   // hashtable bucket
   uint32_t bkt = 0;
@@ -119,7 +119,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
     }
 
     hash_add_bits(tbl, bits, &cur->node, key);
-    deq_push_tail(&deq, 5, (void *)cur);
+    deq_push_tail(&deq, (void *)cur);
   }
   printf("\n\n");
 
@@ -129,7 +129,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   cnt = cnt_init;
   hash_for_each_bits(tbl, hash_bits, bkt, cur, node) {
     cnt--;
-    uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
+    int key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
     uint32_t bkt_calc = calc_bkt(key_calc, 1 << hash_bits);
     if (cnt % printer == 0) {
       uint8_t *m = cur->mac;
@@ -151,7 +151,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
 
   // count entries with specified mac
   {
-    uint32_t cnt_mac = count_by_mac(tbl, hash_bits, cur->mac);
+    int cnt_mac = count_by_mac(tbl, hash_bits, cur->mac);
     uint8_t *m = cur->mac;
     printf("mac: %02X:%02X:%02X:%02X:%02X:%02X\n", m[0], m[1], m[2], m[3], m[4], m[5]);
     printf("cnt: %u\n", cnt_mac);
@@ -159,11 +159,10 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
 
   // DEQ_POP AND PUSH TEST
   {
-    deq_entry_s *item;
-    deq_pop(&deq, &item);
+    deq_entry_t *item = deq_pop_head(&deq);
     mac_node_s *node = item->data;
     printf("deq_pop and deq_push popped item again\n");
-    deq_push(&deq, 5, (void *)node);
+    deq_push_head(&deq, (void *)node);
     uint8_t *m = node->mac;
     printf("DEQ_POP popped entry: %02X:%02X:%02X:%02X:%02X:%02X\n",
            m[0], m[1], m[2], m[3], m[4], m[5]);
@@ -172,8 +171,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   }
 
   {
-    deq_entry_s *item;
-    deq_pop_tail(&deq, &item);
+    deq_entry_t *item = deq_pop_tail(&deq);
     mac_node_s *node = item->data;
     uint8_t *m = node->mac;
     printf("DEQ_POP_TAIL popped entry: %02X:%02X:%02X:%02X:%02X:%02X\n",
@@ -186,7 +184,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   {
     printf("Listing deque entries (%u):\n", deq.size);
     cnt = 0;
-    deq_entry_s *item;
+    deq_entry_t *item;
     DEQ_FOR_EACH(deq, item, list) {
       uint8_t *m = ((mac_node_s *)(item->data))->mac;
       struct in_addr *ip = &(((mac_node_s *)(item->data))->ip);
@@ -201,7 +199,7 @@ static int do_hashtable_stuff(uint8_t bits, float density, float print_freq_dens
   cnt = cnt_init;
   hash_for_each_bits(tbl, hash_bits, bkt, cur, node) {
     cnt--;
-    uint32_t key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
+    int key_calc = hash_time33((const char *)cur->mac, IFHWADDRLEN);
     uint32_t bkt_calc = calc_bkt(key_calc, 1 << hash_bits);
     if (cnt % printer == 0) {
       uint8_t *m = cur->mac;
@@ -255,12 +253,12 @@ static void add_string_to_hashtable(hashtable_t *ht, const char *str) {
   string_entry_t *entry = malloc(sizeof(string_entry_t));
   size_t str_len = strlen(str);
   memcpy(entry->str, str, str_len + 1); // dup str
-  uint32_t key = hash_time33(str, str_len);
+  int key = hash_time33(str, str_len);
   hashtable_add(ht, &entry->node, key);
 }
 
 static char *find_string_in_hashtable(hashtable_t *ht, const char *str) {
-  uint32_t key = hash_time33(str, strlen(str));
+  int key = hash_time33(str, strlen(str));
   uint32_t bkt = calc_bkt(key, 1 << ht->bits);
   string_entry_t *entry;
   hlist_for_each_entry(entry, &ht->table[bkt], node) {
@@ -272,7 +270,7 @@ static char *find_string_in_hashtable(hashtable_t *ht, const char *str) {
 }
 
 static int delete_string_from_hashtable(hashtable_t *ht, const char *str) {
-  uint32_t key = hash_time33(str, strlen(str));
+  int key = hash_time33(str, strlen(str));
   uint32_t bkt = calc_bkt(key, 1 << ht->bits);
   struct hlist_node *tmp;
   string_entry_t *cur;
@@ -293,7 +291,7 @@ static size_t count_hashtable_collisions(hashtable_t *ht) {
   for (uint32_t bkt = 0; bkt < size; ++bkt) {
     struct hlist_head *head = &ht->table[bkt];
     struct hlist_node *node;
-    int bucket_count = 0;
+    uint32_t bucket_count = 0;
 
     hlist_for_each(node, head) {
       ++bucket_count;
@@ -312,7 +310,7 @@ static size_t count_hashtable_entries(hashtable_t *ht) {
   for (uint32_t bkt = 0; bkt < size; ++bkt) {
     struct hlist_head *head = &ht->table[bkt];
     struct hlist_node *node;
-    int bucket_count = 0;
+    uint32_t bucket_count = 0;
 
     hlist_for_each(node, head) {
       ++bucket_count;
@@ -330,7 +328,7 @@ static void free_string_entry(void *entry) {
 static int do_hashtable_stuff2(uint8_t bits, float density, float print_freq_density) {
   printf("%s\n", __func__);
   
-  hashtable_t *ht = create_hashtable(bits, free_string_entry);
+  hashtable_t *ht = ht_create(bits);
   if (!ht) {
     perror("Failed to create hashtable");
     return 1;
@@ -365,7 +363,7 @@ static int do_hashtable_stuff2(uint8_t bits, float density, float print_freq_den
   found_str = find_string_in_hashtable(ht, "test_string_1");
   if (!found_str) printf("NOT Found: %s as expected\n", "test_string_1");
 
-  FREE_HASHTABLE(ht, string_entry_t, node, free_string_entry);
+  HT_FREE(ht, string_entry_t, node, free_string_entry);
 
   return 0;
 }
@@ -387,13 +385,13 @@ static void add_string_to_hashtable2(hashtable_t *ht, const char *str) {
   size_t str_len = strlen(str);
   entry->str = malloc(str_len + 1);
   memcpy(entry->str, str, str_len + 1); // dup str
-  uint32_t key = hash_time33(str, str_len);
+  int key = hash_time33(str, str_len);
   hashtable_add(ht, &entry->node, key);
 }
 
 static int delete_string_from_hashtable2(hashtable_t *ht, const char *str) {
   // uint32_t key = hash_time33(str, strlen(str));
-  uint32_t key = hash_time33(str, strlen(str));
+  int key = hash_time33(str, strlen(str));
   uint32_t bkt = calc_bkt(key, 1 << ht->bits);
   struct hlist_node *tmp;
   string_entry2_t *cur;
@@ -410,9 +408,9 @@ static int delete_string_from_hashtable2(hashtable_t *ht, const char *str) {
 
 static int do_hashtable_stuff3(uint8_t bits, float density, float print_freq_density) {
   printf("%s\n", __func__);
-  int max;
+  uint32_t max;
   
-  hashtable_t *ht = create_hashtable(bits, free_string_entry2);
+  hashtable_t *ht = ht_create(bits);
   if (!ht) {
     perror("Failed to create hashtable");
     return 1;
@@ -420,7 +418,7 @@ static int do_hashtable_stuff3(uint8_t bits, float density, float print_freq_den
 
   // create random strings
   max = (1 << bits) * density;
-  for (int i = 0; i < max; i++) {
+  for (uint32_t i = 0; i < max; i++) {
     char random_str[20];
     sprintf(random_str, "string_%d", rand());
     add_string_to_hashtable2(ht, random_str);
@@ -433,7 +431,7 @@ static int do_hashtable_stuff3(uint8_t bits, float density, float print_freq_den
   // list entries
   uint32_t bkt = 0;
   string_entry2_t *cur;
-  uint32_t cnt = 0;
+  int cnt = 0;
   int print_each = max * print_freq_density;
   hash_for_each_bits(ht->table, ht->bits, bkt, cur, node) {
     if(cnt % print_each == 0) printf("cnt: %u bkt: %u string: %s\n", cnt, bkt, cur->str);
@@ -464,7 +462,7 @@ static int do_hashtable_stuff3(uint8_t bits, float density, float print_freq_den
   found_str = find_string_in_hashtable(ht, "test_string_1");
   if (!found_str) printf("NOT Found: %s as expected\n", "test_string_1");
 
-  FREE_HASHTABLE(ht, string_entry_t, node, free_string_entry2);
+  HT_FREE(ht, string_entry_t, node, free_string_entry2);
 
   return 0;
 }

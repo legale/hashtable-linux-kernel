@@ -40,9 +40,8 @@
  */
 
 typedef struct hashtable {
-  struct hlist_head *table;   // Pointer to an array of hlist_head, representing the hash table's buckets array
-  uint32_t bits;              // Number of bits determining the size of the table
-  void (*free_entry)(void *); // cb function to free entry memory
+  struct hlist_head *table; // Pointer to an array of hlist_head, representing the hash table's buckets array
+  uint32_t bits;            // Number of bits determining the size of the table
 } hashtable_t;
 
 #define DEFINE_HASHTABLE(name, bits)    \
@@ -71,46 +70,11 @@ typedef struct hashtable {
  * @param divisor The divisor, which must be a power of two.
  * @return The remainder of 'num' divided by 'divisor'.
  */
-static inline int calc_bkt(int num, int divisor) {
-  return num & (divisor - 1);
+static inline uint32_t calc_bkt(int num, int divisor) {
+  return (uint32_t)num & (divisor - 1);
 }
 
-/**
- * create_hashtable - Create and initialize a new hash table
- * @bits: Number of bits to determine the size of the hash table
- * @free_entry: Function pointer for custom memory deallocation of elements
- *
- * This function allocates memory for a new hashtable_t structure and its associated
- * hash table array. The size of the hash table is determined by the 'bits' parameter,
- * with the actual number of buckets being 2 raised to the power of 'bits'. It also sets
- * the 'free_entry' function pointer, which is used for deallocating memory of elements
- * stored in the hash table.
- *
- * The function initializes each bucket of the hash table to be an empty list, preparing
- * it for use. In case of memory allocation failure, or if 'free_entry' is NULL, the function
- * returns NULL.
- *
- * Usage Example:
- *
- * // Custom free function for the elements
- * void my_free_function(void *element) {
- *     // Custom logic for freeing the element
- *     free(element);
- * }
- *
- * // Create a hash table with 1024 buckets (2^10) and custom free function
- * hashtable_t *my_hashtable = create_hashtable(10, my_free_function);
- *
- * // ... [Operations on the hash table] ...
- *
- * // Cleanup
- * // Assuming my_data_type is the type of elements stored in the hash table
- * CLEAR_HASHTABLE(my_hashtable, my_data_type, my_hlist_node, my_free_function);
- *
- * Return: On success, a pointer to the newly created hashtable_t structure.
- *         On failure, or if 'free_entry' is NULL, NULL.
- */
-hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
+hashtable_t *ht_create(uint32_t bits);
 
 /**
  * CLEAR_HASHTABLE_BITS - safely clear and free all elements in a hash table
@@ -153,7 +117,6 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
  */
 #define CLEAR_HASHTABLE_BITS(tbl, bits, struct_type, node_member, free_func)                         \
   do {                                                                                               \
-    static_assert(free_func != NULL, "A valid free_func must be provided for CLEAR_HASHTABLE_BITS"); \
     uint32_t bkt;                                                                                    \
     struct hlist_node *tmp;                                                                          \
     struct_type *cur;                                                                                \
@@ -172,11 +135,11 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
  *
  * This macro is used for iterating over a hash table to count the total number
  * of entries it contains. It leverages the hash_for_each_bits macro to iterate
- * over every bucket and every entry within those buckets in the hash table, 
+ * over every bucket and every entry within those buckets in the hash table,
  * incrementing the count for each found entry.
  *
  * The macro is designed to be flexible and can work with any type of struct
- * that contains an hlist_node, allowing for easy integration into existing 
+ * that contains an hlist_node, allowing for easy integration into existing
  * hash table implementations without requiring specific function implementations
  * for counting.
  *
@@ -200,17 +163,18 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
  * printf("The hash table contains %zu entries.\n", my_entries_count);
  *
  */
-#define COUNT_ENTRIES_IN_HASHTABLE(ht, type, node, count) do { \
-    count = 0; \
-    uint32_t bkt; \
-    type *cur; \
+#define COUNT_ENTRIES_IN_HASHTABLE(ht, type, node, count)     \
+  do {                                                        \
+    count = 0;                                                \
+    uint32_t bkt;                                             \
+    type *cur;                                                \
     hash_for_each_bits(ht->table, ht->bits, bkt, cur, node) { \
-        count++; \
-    } \
-} while(0)
+      count++;                                                \
+    }                                                         \
+  } while (0)
 
 /**
- * FREE_HASHTABLE - safely clear and free all elements in a hash table encapsulated within a hashtable_t structure
+ * HT_FREE - safely clear and free all elements in a hash table encapsulated within a hashtable_t structure
  * @ht: Pointer to the hashtable_t structure containing the hash table and its size
  * @struct_type: The type of the structures stored in the hash table
  * @node_member: The name of the hlist_node member within the struct_type
@@ -238,9 +202,9 @@ hashtable_t *create_hashtable(uint32_t bits, void (*free_entry)(void *));
  * // ... [ usage of my_hashtable] ...
  *
  * // free all ht entries, ht itself and my_hashtable container.
- * FREE_HASHTABLE(&my_hashtable, struct my_data_type, my_hlist_node, custom_free_func);
+ * HT_FREE(&my_hashtable, struct my_data_type, my_hlist_node, custom_free_func);
  */
-#define FREE_HASHTABLE(ht, struct_type, node_member, free_func)                         \
+#define HT_FREE(ht, struct_type, node_member, free_func)                                \
   do {                                                                                  \
     CLEAR_HASHTABLE_BITS((ht)->table, (ht)->bits, struct_type, node_member, free_func); \
     free((ht)->table);                                                                  \

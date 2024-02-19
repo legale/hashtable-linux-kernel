@@ -23,14 +23,14 @@ static void add_string_to_hashtable(hashtable_t *ht, const char *str) {
   size_t str_len = strlen(str);
   entry->str = malloc(str_len + 1);
   memcpy(entry->str, str, str_len + 1); // dup str
-  uint32_t key = hash_time33(str, str_len);
+  int key = hash_time33(str, str_len);
   hashtable_add(ht, &entry->node, key);
 }
 
 static int delete_string_from_hashtable(hashtable_t *ht, const char *str) {
   // uint32_t key = hash_time33(str, strlen(str));
-  uint32_t key = hash_time33(str, strlen(str));
-  uint32_t bkt = calc_bkt(key, 1 << ht->bits);
+  int key = hash_time33(str, strlen(str));
+  int bkt = calc_bkt(key, 1 << ht->bits);
   struct hlist_node *tmp;
   string_entry_t *cur;
 
@@ -45,8 +45,8 @@ static int delete_string_from_hashtable(hashtable_t *ht, const char *str) {
 }
 
 static char **find_string_in_hashtable(hashtable_t *ht, const char *str) {
-  uint32_t key = hash_time33(str, strlen(str));
-  uint32_t bkt = calc_bkt(key, 1 << ht->bits);
+  int key = hash_time33(str, strlen(str));
+  int bkt = calc_bkt(key, 1 << ht->bits);
   string_entry_t *entry;
   hlist_for_each_entry(entry, &ht->table[bkt], node) {
     if (strcmp(entry->str, str) == 0) {
@@ -57,36 +57,31 @@ static char **find_string_in_hashtable(hashtable_t *ht, const char *str) {
 }
 
 void test_create_hashtable(void) {
-  uint32_t bits = 12;
+  int bits = 12;
 
-  hashtable_t *ht = create_hashtable(bits, free_entry);
+  hashtable_t *ht = ht_create(bits);
   // check creation
   TEST_ASSERT_NOT_NULL(ht);
 
   if (ht != NULL) {
     TEST_ASSERT_EQUAL_UINT32(bits, ht->bits);
     TEST_ASSERT_NOT_NULL(ht->table);
-    TEST_ASSERT_NOT_NULL(ht->free_entry);
-
     // free ht
-    FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+    HT_FREE(ht, string_entry_t, node, free_entry);
   }
 
-  // check if there is no callback passed
-  hashtable_t *ht_null = create_hashtable(bits, NULL);
-  TEST_ASSERT_NULL(ht_null);
 }
 
 #define TEST_STRING "just_test_string"
 
 void test_add_to_ht(void) {
-  hashtable_t *ht = create_hashtable(10, free_entry);
+  hashtable_t *ht = ht_create(10);
   TEST_ASSERT_NOT_NULL(ht);
 
   string_entry_t *entry = malloc(sizeof(string_entry_t));
   entry->str = malloc(sizeof(TEST_STRING) + 1);
   memcpy(entry->str, TEST_STRING, sizeof(TEST_STRING));
-  uint32_t key = hash_time33(entry->str, sizeof(TEST_STRING));
+  int key = hash_time33(entry->str, sizeof(TEST_STRING));
   hashtable_add(ht, &entry->node, key);
 
   char **found_str = find_string_in_hashtable(ht, TEST_STRING);
@@ -96,20 +91,20 @@ void test_add_to_ht(void) {
   TEST_ASSERT_EQUAL_PTR(entry, found_entry);
 
   // this should free everything in the hashtable
-  FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+  HT_FREE(ht, string_entry_t, node, free_entry);
 }
 
 void test_delete_string_from_hashtable(void) {
   char **found_str;
 
-  hashtable_t *ht = create_hashtable(10, free_entry);
+  hashtable_t *ht = ht_create(10);
   TEST_ASSERT_NOT_NULL(ht);
 
   string_entry_t *entry = malloc(sizeof(string_entry_t));
   entry->str = malloc(sizeof(TEST_STRING) + 1);
 
   strcpy(entry->str, TEST_STRING);
-  uint32_t key = hash_time33(entry->str, strlen(entry->str));
+  int key = hash_time33(entry->str, strlen(entry->str));
   hashtable_add(ht, &entry->node, key);
 
   found_str = find_string_in_hashtable(ht, TEST_STRING);
@@ -121,11 +116,11 @@ void test_delete_string_from_hashtable(void) {
   found_str = find_string_in_hashtable(ht, TEST_STRING);
   TEST_ASSERT_NULL(found_str);
 
-  FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+  HT_FREE(ht, string_entry_t, node, free_entry);
 }
 
 void test_add_and_delete_entries(void) {
-  hashtable_t *ht = create_hashtable(10, free_entry);
+  hashtable_t *ht = ht_create(10);
   TEST_ASSERT_NOT_NULL(ht);
 
   size_t entries_before, entries_after, entries_count;
@@ -160,12 +155,12 @@ void test_add_and_delete_entries(void) {
   }
 
   // free ht entries and ht itself
-  FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+  HT_FREE(ht, string_entry_t, node, free_entry);
 }
 
 void test_add_delete_performance(void) {
-	uint32_t ht_bits = 15;
-  hashtable_t *ht = create_hashtable(ht_bits, free_entry);
+	int ht_bits = 15;
+  hashtable_t *ht = ht_create(ht_bits);
   printf("ht size: %u\n", 1 << ht->bits);
   TEST_ASSERT_NOT_NULL(ht);
 
@@ -188,10 +183,10 @@ void test_add_delete_performance(void) {
     time_used_for_one[j] = (end.tv_sec - start.tv_sec) * 1000000000LL + (end.tv_nsec - start.tv_nsec);
   }
 	//очищаем таблицу
-	FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+	HT_FREE(ht, string_entry_t, node, free_entry);
 	
 	//создаем заново
-	ht = create_hashtable(ht_bits, free_entry);
+	ht = ht_create(ht_bits);
 
   // Вычисляем среднее время для одной записи и сравниваем
   long long total_time_for_one = 0;
@@ -229,7 +224,7 @@ void test_add_delete_performance(void) {
   COUNT_ENTRIES_IN_HASHTABLE(ht, string_entry_t, node, entries_count);
   TEST_ASSERT_EQUAL_UINT64(0, entries_count);
 
-  FREE_HASHTABLE(ht, string_entry_t, node, free_entry);
+  HT_FREE(ht, string_entry_t, node, free_entry);
 }
 
 int main(void) {
