@@ -83,7 +83,7 @@ int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
 
   int hash_key = hash_time33(key, key_size);           // Generate a hash for the key
   hashtable_add(arr->ht, &new_entry->hnode, hash_key); // Add to the hash table
-  list_add_tail(&new_entry->lnode, &arr->list);        // Add to the end of the list
+  k_list_add_tail(&new_entry->lnode, &arr->list);        // Add to the end of the list
   arr->size++;                                         // Increment the size
 
   return 0; // Success
@@ -95,7 +95,7 @@ int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
   if (existing_entry == NULL) return 1;
 
   hlist_del(&existing_entry->hnode);
-  list_del(&existing_entry->lnode);
+  k_list_del(&existing_entry->lnode);
   arr->free_entry(existing_entry); // Free the existing data using the callback
   arr->size--;                     // decrease array size
   return 0;
@@ -120,11 +120,11 @@ int array_free(assoc_array_t *arr) {
 }
 
 static assoc_array_entry_t *_array_get_first(assoc_array_t *arr, bool is_first) {
-  if (arr == NULL || list_empty(&arr->list) || arr->size == 0) return NULL;
+  if (arr == NULL || k_list_empty(&arr->list) || arr->size == 0) return NULL;
   if (is_first) {
-    return list_first_entry(&arr->list, assoc_array_entry_t, lnode);
+    return k_list_first_entry(&arr->list, assoc_array_entry_t, lnode);
   } else {
-    return list_last_entry(&arr->list, assoc_array_entry_t, lnode);
+    return k_list_last_entry(&arr->list, assoc_array_entry_t, lnode);
   }
 }
 
@@ -137,18 +137,18 @@ assoc_array_entry_t *array_get_last(assoc_array_t *arr) {
 }
 
 static int _array_del_first(assoc_array_t *arr, bool is_first) {
-  if (arr == NULL || list_empty(&arr->list) || arr->size == 0) return -1;
+  if (arr == NULL || k_list_empty(&arr->list) || arr->size == 0) return -1;
   assoc_array_entry_t *e;
   if (is_first) {
-    e = list_first_entry(&arr->list, assoc_array_entry_t, lnode);
+    e = k_list_first_entry(&arr->list, assoc_array_entry_t, lnode);
   } else {
-    e = list_last_entry(&arr->list, assoc_array_entry_t, lnode);
+    e = k_list_last_entry(&arr->list, assoc_array_entry_t, lnode);
   }
   if (e == NULL) return -1;
 
   // delete from ht and list
   hlist_del(&e->hnode);
-  list_del(&e->lnode);
+  k_list_del(&e->lnode);
 
   // free entry and decrease size
   arr->free_entry(e);

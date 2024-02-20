@@ -20,9 +20,9 @@ void _deq_push(deq_t *name, bool push_tail_flag, void *data) {
   deq_item->data = data;
 
   if (push_tail_flag) {
-    list_add_tail(&deq_item->list, &name->list);
+    k_list_add_tail(&deq_item->list, &name->list);
   } else {
-    list_add(&deq_item->list, &name->list);
+    k_list_add(&deq_item->list, &name->list);
   }
 }
 
@@ -40,7 +40,7 @@ bool deq_isempty(deq_t *name) {
 
 void deq_free(deq_t *name) {
   deq_entry_t *item, *tmp;
-  list_for_each_entry_safe(item, tmp, &name->list, list) {
+  k_list_for_each_entry_safe(item, tmp, &name->list, list) {
     free(item);
   }
 	free(name);
@@ -52,12 +52,12 @@ deq_entry_t *_deq_pop(deq_t *deq, bool pop_from_tail) {
     }
 		deq_entry_t *item;
 		if(!pop_from_tail){
-    	item = list_entry(deq->list.next, deq_entry_t, list); // get first item
+    	item = k_list_entry(deq->list.next, deq_entry_t, list); // get first item
     } else {
-	    item = list_entry(deq->list.prev, deq_entry_t, list); // get first item
+	    item = k_list_entry(deq->list.prev, deq_entry_t, list); // get first item
 		}
 
-		list_del(&item->list); // delete item from list
+		k_list_del(&item->list); // delete item from list
     --deq->size; // decrease deque size
 
     return item; // return item
@@ -78,9 +78,9 @@ deq_entry_t *_deq_get(deq_t *deq, bool peek_from_tail) {
     }
     deq_entry_t *item;
     if (!peek_from_tail) {
-        item = list_entry(deq->list.next, deq_entry_t, list); 
+        item = k_list_entry(deq->list.next, deq_entry_t, list); 
     } else {
-        item = list_entry(deq->list.prev, deq_entry_t, list); 
+        item = k_list_entry(deq->list.prev, deq_entry_t, list); 
     }
     
     return item;

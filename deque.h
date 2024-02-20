@@ -31,15 +31,15 @@ typedef struct deq_entry {
 #define DEQ_PUSH_TAIL(name, max_items, entry)\
 {\
     if(max_items && name.size == max_items){\
-        deq_entry_t *item = list_entry(name.list.next, deq_entry_t, list);\
-        list_del(name.list.next);\
+        deq_entry_t *item = k_list_entry(name.list.next, deq_entry_t, list);\
+        k_list_del(name.list.next);\
         free(item);\
     }else{\
         ++name.size;\
     }\
     deq_entry_t *deq_item = (deq_entry_t *)malloc(sizeof(deq_entry_t));\
     deq_item->node = entry;\
-    list_add_tail(&deq_item->list, &name.list);\
+    k_list_add_tail(&deq_item->list, &name.list);\
 }\
 
 
@@ -47,40 +47,40 @@ typedef struct deq_entry {
 #define DEQ_PUSH(name, max_items, entry)\
 {\
     if(max_items && name.size == max_items){\
-        deq_entry_t *item = list_entry(name.list.next, deq_entry_t, list);\
-        list_del(name.list.next);\
+        deq_entry_t *item = k_list_entry(name.list.next, deq_entry_t, list);\
+        k_list_del(name.list.next);\
         free(item);\
     }else{\
         ++name.size;\
     }\
     deq_entry_t *deq_item = (deq_entry_t *)malloc(sizeof(deq_entry_t));\
     deq_item->node = entry;\
-    list_add(&deq_item->list, &name.list);\
+    k_list_add(&deq_item->list, &name.list);\
 }\
 
 
 #define DEQ_FOR_EACH(deq_struct, pos, deq_member)\
-    list_for_each_entry(pos, &deq_struct.list, deq_member)\
+    k_list_for_each_entry(pos, &deq_struct.list, deq_member)\
 
 #define DEQ_CLEAR(name)\
 {\
     deq_entry_t *_tmp_item, *_tmp_item_next;\
-    list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name.list, list) {\
+    k_list_for_each_entry_safe(_tmp_item, _tmp_item_next, &name.list, list) {\
         free(_tmp_item);\
     }\
 }\
 
 #define DEQ_POP(name, item)\
 {\
-    item = list_entry(name.list.next, deq_entry_t, list);\
-    list_del(name.list.next);\
+    item = k_list_entry(name.list.next, deq_entry_t, list);\
+    k_list_del(name.list.next);\
     --name.size;\
 }\
 
 #define DEQ_POP_TAIL(name, item)\
 {\
-    item = list_entry(name.list.prev, deq_entry_t, list);\
-    list_del(name.list.prev);\
+    item = k_list_entry(name.list.prev, deq_entry_t, list);\
+    k_list_del(name.list.prev);\
     --name.size;\
 }\
 
