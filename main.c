@@ -10,6 +10,10 @@
 
 #include "assoc_array.h"
 
+#ifdef LEAKCHECK
+#include "leak_detector_c.h"
+#endif
+
 /* cli arguments parse macro and functions */
 #define NEXT_ARG()                         \
   do {                                     \
@@ -218,5 +222,9 @@ int run_example_code(int bits, float density, float print_freq_density) {
   // Clean up: Free the associative array and its contents
   array_free(arr);
 
+#ifdef LEAKCHECK
+	//this is memleak report produced by leak_detector_c.c
+	report_mem_leak();
+#endif
   return 0;
 }

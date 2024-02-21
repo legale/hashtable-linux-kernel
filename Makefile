@@ -2,6 +2,9 @@
 CC = gcc -ggdb
 AR = ar
 CFLAGS += -Wall -Wextra -O2 -Wno-unused-parameter
+ifdef LEAKCHECK
+CFLAGS += -DLEAKCHECK
+endif
 I += -I./ -I/usr/include -I$(UNITY_ROOT)/src
 LDLIBS +=
 LDDIRS += -L$(BD)
@@ -14,6 +17,9 @@ BD = ./build
 LIBNAME = hashtable
 SRC_LIB := hashtable.c deque.c assoc_array.c
 SRC_BIN := main.c
+ifdef LEAKCHECK
+SRC_BIN += leak_detector_c.c
+endif
 SRC := $(SRC_LIB) $(SRC_BIN)
 OBJS := $(SRC:%.c=$(BD)/%.o)
 OBJS_LIB := $(SRC_LIB:%.c=$(BD)/%.o)
