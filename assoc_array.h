@@ -7,7 +7,7 @@
 
 typedef struct array_entry {
   struct hlist_node hnode; // Node for hash table linkage
-  struct list_head lnode;  // Node for doubly linked list
+  struct k_list_head lnode;  // Node for doubly linked list
   void *key;
   uint8_t key_size;
   void *data; // Data of the item
@@ -15,7 +15,7 @@ typedef struct array_entry {
 
 typedef struct array_struct {
   hashtable_t *ht;                                                                        // the hash table
-  struct list_head list;                                                                  // Head of the doubly linked list for accessing first and last items
+  struct k_list_head list;                                                                  // Head of the doubly linked list for accessing first and last items
   size_t size;                                                                            // Current number of elements in the array
   void (*free_entry)(void *);                                                             // cb function to free entry memory
   int (*fill_entry)(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size); // cb function to fill entry

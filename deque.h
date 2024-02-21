@@ -14,12 +14,12 @@
 
 /* this structure to store entries as deque structure */
 typedef struct deq {
-	struct list_head list;
+	struct k_list_head list;
     int size;
 } deq_t;
 
 typedef struct deq_entry {
-    struct list_head list;
+    struct k_list_head list;
     void *data;
 } deq_entry_t;
 

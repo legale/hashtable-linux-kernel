@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TOOLS_LINUX_TYPES_H_
-#define _TOOLS_LINUX_TYPES_H_
+#ifndef _TOOLS_K_LINUX_TYPES_H_
+#define _TOOLS_K_LINUX_TYPES_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -86,9 +86,9 @@ typedef struct {
 # define __aligned_u64 __u64 __attribute__((aligned(8)))
 #endif
 
-typedef struct list_head {
-	struct list_head *next, *prev;
-} list_head_s;
+typedef struct k_list_head {
+	struct k_list_head *next, *prev;
+} k_list_head_s;
 
 struct hlist_head {
 	struct hlist_node *first;
@@ -98,4 +98,4 @@ struct hlist_node {
 	struct hlist_node *next, **pprev;
 };
 
-#endif /* _TOOLS_LINUX_TYPES_H_ */
+#endif /* _TOOLS_K_LINUX_TYPES_H_ */

@@ -12,7 +12,7 @@ BD = ./build
 
 # Library and executable setup
 LIBNAME = hashtable
-SRC_LIB := hashtable.c deque.c mactable.c assoc_array.c
+SRC_LIB := hashtable.c deque.c assoc_array.c
 SRC_BIN := main.c
 SRC := $(SRC_LIB) $(SRC_BIN)
 OBJS := $(SRC:%.c=$(BD)/%.o)

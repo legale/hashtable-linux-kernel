@@ -87,7 +87,7 @@ void test_add_to_ht(void) {
   char **found_str = find_string_in_hashtable(ht, TEST_STRING);
   TEST_ASSERT_EQUAL_PTR(entry->str, *found_str);
 
-  string_entry_t *found_entry = container_of(found_str, string_entry_t, str);
+  string_entry_t *found_entry = k_container_of(found_str, string_entry_t, str);
   TEST_ASSERT_EQUAL_PTR(entry, found_entry);
 
   // this should free everything in the hashtable
