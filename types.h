@@ -42,11 +42,13 @@ typedef __s16 s16;
 typedef __u8  u8;
 typedef __s8  s8;
 
+#ifndef __bitwise
 #ifdef __CHECKER__
 #define __bitwise	__attribute__((bitwise))
 #else
 #define __bitwise
 #endif
+#endif 
 
 #define __force
 /* This is defined in linux/compiler_types.h and is left for backward
