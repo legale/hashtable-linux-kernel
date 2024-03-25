@@ -64,6 +64,17 @@ void test_array_add(void) {
   TEST_ASSERT_EQUAL_INT(0, add_result);
 }
 
+void test_array_add_with_null(void) {
+  // key and data are global vars
+  data = malloc(strlen("test_data") + 1); // +1 for null terminator
+  strcpy(data, "test_data");
+  uint8_t key_size = strlen(key) + 1; // + 1 for null terminator
+
+  int add_result = array_add(NULL, data, key, key_size);
+  TEST_ASSERT_EQUAL_INT(-1, add_result);
+  free(data);
+}
+
 void test_array_get_by_key(void) {
   // key and data are global vars
   uint8_t key_size = strlen(key) + 1;
@@ -71,6 +82,14 @@ void test_array_get_by_key(void) {
   assoc_array_entry_t *entry = array_get_by_key(arr, key, key_size);
   TEST_ASSERT_NOT_NULL(entry);                 // Ensure the element is found
   TEST_ASSERT_EQUAL_STRING(data, entry->data); // Compare the retrieved data with the original
+}
+
+void test_array_get_by_key_with_null(void) {
+  // key and data are global vars
+  uint8_t key_size = strlen(key) + 1;
+  // Retrieve the element by key
+  assoc_array_entry_t *entry = array_get_by_key(NULL, key, key_size);
+  TEST_ASSERT_NULL(entry);
 }
 
 void test_array_del(void) {
@@ -214,13 +233,14 @@ int main(void) {
 
   RUN_TEST(test_array_add);
   RUN_TEST(test_array_get_by_key);
+  RUN_TEST(test_array_add_with_null);
+  RUN_TEST(test_array_get_by_key_with_null);
   RUN_TEST(test_array_free_non_empty);
 
   RUN_TEST(test_array_del);
   RUN_TEST(test_array_add_replace);
   RUN_TEST(test_array_fill_and_half_delete);
   RUN_TEST(test_array_get_first_get_last_with_multiple_entries);
-	
 
   return UNITY_END();
 }

@@ -50,6 +50,7 @@ array_create(uint32_t bits, void (*free_entry)(void *),
 }
 
 assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key_size) {
+  if(!arr) return NULL;
   // Calculate the hash key and bucket index
   int hash_key = hash_time33(key, key_size); // Assuming hash_time33 is applicable for arbitrary data
   int bkt = calc_bkt(hash_key, 1 << arr->ht->bits);
@@ -69,13 +70,13 @@ assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key
 }
 
 int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
-  int ret;
+  if(!arr) return -1;
   assoc_array_entry_t *new_entry = malloc(sizeof(assoc_array_entry_t));
   if (!new_entry) {
     return -1; // Memory allocation failed
   }
 
-  ret = arr->fill_entry(new_entry, data, key, key_size);
+  int ret = arr->fill_entry(new_entry, data, key, key_size);
   if (ret) {
     free(new_entry);
     return -1; // Memory allocation failed
@@ -90,6 +91,7 @@ int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
 }
 
 int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
+  if(!arr) return -1;
   assoc_array_entry_t *existing_entry = array_get_by_key(arr, key, key_size);
 
   if (existing_entry == NULL) return 1;
@@ -102,6 +104,7 @@ int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
 }
 
 int array_add_replace(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
+  if(!arr) return -1;
   (void)array_del(arr, key, key_size);
   // Delegate the addition of a new entry to a separate function
   return array_add(arr, data, key, key_size);
