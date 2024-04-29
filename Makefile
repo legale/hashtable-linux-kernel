@@ -5,6 +5,12 @@ CFLAGS += -Wall -Wextra -O2 -Wno-unused-parameter
 ifdef LEAKCHECK
 CFLAGS += -DLEAKCHECK
 endif
+
+ifdef COVERAGE
+CFLAGS += -fprofile-arcs -ftest-coverage
+LDLIBS += -lgcov --coverage
+endif
+
 I += -I./ -I/usr/include -I$(UNITY_ROOT)/src
 LDLIBS +=
 LDDIRS += -L$(BD)
@@ -68,16 +74,28 @@ shared: sharedlib
 	$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $(SRC_BIN) -L$(BD) -Wl,-Bdynamic -l$(LIBNAME) -o $(BD)/$(NAME)_shared
 
 # Compile and run tests
+test: CFLAGS += -fprofile-arcs -ftest-coverage
 test: $(TEST_EXECS)
 	@for test_exec in $^ ; do \
 		echo Running $$test_exec ; \
 		$$test_exec ; \
 	done
+	@echo "Generating gcov reports..."
+	@for src_file in $(SRC_LIB); do \
+		gcov -n -o $(BD) $$src_file | grep -A 1 "File '$$src_file'"; \
+	done
+
+	@echo "Generating coverage report..."
+	@lcov --capture --directory $(BD) --output-file coverage.info
+	@genhtml coverage.info --output-directory coverage	
 
 # Rule to make each test executable
 $(BD)/%: $(BD)/%.o $(OBJS_LIB) $(UNITY_OBJ)
 	$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $^ -o $@
 
-# Clean up build directory
+# Clean up build directory and coverage data
 clean:
 	rm -rf $(BD)/*
+	rm -f *.gcda *.gcno *.info
+	rm -rf coverage
+

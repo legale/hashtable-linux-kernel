@@ -2,6 +2,20 @@
 
 #include "assoc_array.h"
 
+// malloc, calloc, free mocks for testing
+void *(*custom_malloc)(size_t) = malloc;
+void *(*custom_calloc)(size_t, size_t) = calloc;
+void (*custom_free)(void *) = free;
+#define malloc custom_malloc
+#define calloc custom_calloc
+#define free custom_free
+
+void set_memory_functions(void *(*malloc_func)(size_t), void *(*calloc_func)(size_t, size_t), void (*free_func)(void *)) {
+  custom_malloc = malloc_func;
+  custom_calloc = calloc_func;
+  custom_free = free_func;
+}
+
 static int fill_assoc_array_entry(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size) {
   entry->key = malloc(key_size);
   if (entry->key) {
@@ -50,7 +64,7 @@ array_create(uint32_t bits, void (*free_entry)(void *),
 }
 
 assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key_size) {
-  if(!arr) return NULL;
+  if (!arr) return NULL;
   // Calculate the hash key and bucket index
   int hash_key = hash_time33(key, key_size); // Assuming hash_time33 is applicable for arbitrary data
   int bkt = calc_bkt(hash_key, 1 << arr->ht->bits);
@@ -70,7 +84,7 @@ assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key
 }
 
 int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
-  if(!arr) return -1;
+  if (!arr) return -1;
   assoc_array_entry_t *new_entry = malloc(sizeof(assoc_array_entry_t));
   if (!new_entry) {
     return -1; // Memory allocation failed
@@ -84,14 +98,14 @@ int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
 
   int hash_key = hash_time33(key, key_size);           // Generate a hash for the key
   hashtable_add(arr->ht, &new_entry->hnode, hash_key); // Add to the hash table
-  k_list_add_tail(&new_entry->lnode, &arr->list);        // Add to the end of the list
+  k_list_add_tail(&new_entry->lnode, &arr->list);      // Add to the end of the list
   arr->size++;                                         // Increment the size
 
   return 0; // Success
 }
 
 int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
-  if(!arr) return -1;
+  if (!arr) return -1;
   assoc_array_entry_t *existing_entry = array_get_by_key(arr, key, key_size);
 
   if (existing_entry == NULL) return 1;
@@ -104,7 +118,7 @@ int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
 }
 
 int array_add_replace(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
-  if(!arr) return -1;
+  if (!arr) return -1;
   (void)array_del(arr, key, key_size);
   // Delegate the addition of a new entry to a separate function
   return array_add(arr, data, key, key_size);

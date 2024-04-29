@@ -3,15 +3,19 @@
 #include "assoc_array.h"
 #include "unity.h"
 
-void setUp(void) {}
-void tearDown(void) {}
-
 static assoc_array_t *arr = NULL;
 static void *data = NULL;
 static void *data2 = NULL;
 static void *data3 = NULL;
 static char key[] = "test_key";
 static char key2[] = "another_test_key";
+
+void *mock_malloc(size_t size) {
+  return NULL; // Simulate memory allocation failure
+}
+
+void setUp(void) {}
+void tearDown(void) {}
 
 void free_entry(void *entry) {
   assoc_array_entry_t *assoc_entry = (assoc_array_entry_t *)entry;
@@ -21,6 +25,13 @@ void free_entry(void *entry) {
   free(assoc_entry->key); // Free the dynamically allocated key
   // printf("free assoc_entry\n");
   free(assoc_entry); // Free the entry itself
+}
+
+void test_array_create_failure() {
+  set_memory_functions(mock_malloc, calloc, free);
+  assoc_array_t *arr_failed = array_create(10, free_entry, NULL);
+  TEST_ASSERT_NULL(arr_failed);
+  set_memory_functions(malloc, calloc, free);
 }
 
 void test_array_create(void) {
@@ -228,6 +239,8 @@ void test_array_get_first_get_last_with_multiple_entries(void) {
 
 int main(void) {
   UNITY_BEGIN();
+
+  RUN_TEST(test_array_create_failure);
   RUN_TEST(test_array_create);
   RUN_TEST(test_array_free_empty);
 
