@@ -21,7 +21,7 @@ BD = ./build
 
 # Library and executable setup
 LIBNAME = hashtable
-SRC_LIB := hashtable.c deque.c assoc_array.c
+SRC_LIB := hashtable.c deque.c assoc_array.c mock_mem_functions.c
 SRC_BIN := main.c
 ifdef LEAKCHECK
 SRC_BIN += leak_detector_c.c

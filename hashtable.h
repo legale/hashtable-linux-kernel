@@ -13,6 +13,8 @@
 #include "list.h"
 #include "log2.h"
 
+// this function to mock ht_create function for testing
+void set_ht_create_function(void *(*ht_create_func)(uint32_t));
 /**
  * struct hashtable - structure for managing a hash table
  * @table: Pointer to an array of hlist_head structures, representing the buckets of the hash table
@@ -115,15 +117,15 @@ hashtable_t *ht_create(uint32_t bits);
  * CLEAR_HASHTABLE_BITS(my_table, bits, struct my_data_type, my_hlist_node, my_data_type_free_func);
  *
  */
-#define CLEAR_HASHTABLE_BITS(tbl, bits, struct_type, node_member, free_func)                         \
-  do {                                                                                               \
-    uint32_t bkt;                                                                                    \
-    struct hlist_node *tmp;                                                                          \
-    struct_type *cur;                                                                                \
-    hash_for_each_safe_bits(tbl, bits, bkt, tmp, cur, node_member) {                                 \
-      hash_del(&cur->node_member);                                                                   \
-      free_func(cur);                                                                                \
-    }                                                                                                \
+#define CLEAR_HASHTABLE_BITS(tbl, bits, struct_type, node_member, free_func) \
+  do {                                                                       \
+    uint32_t bkt;                                                            \
+    struct hlist_node *tmp;                                                  \
+    struct_type *cur;                                                        \
+    hash_for_each_safe_bits(tbl, bits, bkt, tmp, cur, node_member) {         \
+      hash_del(&cur->node_member);                                           \
+      free_func(cur);                                                        \
+    }                                                                        \
   } while (0)
 
 /**

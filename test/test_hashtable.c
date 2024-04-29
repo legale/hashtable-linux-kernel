@@ -2,11 +2,17 @@
 #include <time.h>
 
 #include "hashtable.h"
+#include "mock_mem_functions.h" //this header allow to use set_mem_functions() to redefine original
+
 #include "unity.h"
 
 void setUp(void) {}
 void tearDown(void) {}
 
+// this mock to test code if malloc returns NULL
+void *mock_malloc(size_t size) {
+  return NULL; // Simulate memory allocation failure
+}
 typedef struct string_entry {
   struct hlist_node node; // hashtable list node structure
   char *str;              // str ptr
@@ -56,6 +62,19 @@ static char **find_string_in_hashtable(hashtable_t *ht, const char *str) {
   return NULL; // not found
 }
 
+void test_create_hashtable_failed(void) {
+  int bits = 12;
+
+  // mock mem functions
+  set_memory_functions(mock_malloc, calloc, free);
+  // null expected
+  TEST_ASSERT_NULL(ht_create(bits));
+  set_memory_functions(malloc, calloc, free);
+
+  //try to create very big hashtable  
+  TEST_ASSERT_NULL(ht_create(UINT32_MAX));
+}
+
 void test_create_hashtable(void) {
   int bits = 12;
 
@@ -69,7 +88,6 @@ void test_create_hashtable(void) {
     // free ht
     HT_FREE(ht, string_entry_t, node, free_entry);
   }
-
 }
 
 #define TEST_STRING "just_test_string"
@@ -159,7 +177,7 @@ void test_add_and_delete_entries(void) {
 }
 
 void test_add_delete_performance(void) {
-	int ht_bits = 15;
+  int ht_bits = 15;
   hashtable_t *ht = ht_create(ht_bits);
   printf("ht size: %u\n", 1 << ht->bits);
   TEST_ASSERT_NOT_NULL(ht);
@@ -182,11 +200,11 @@ void test_add_delete_performance(void) {
     clock_gettime(CLOCK_MONOTONIC, &end);
     time_used_for_one[j] = (end.tv_sec - start.tv_sec) * 1000000000LL + (end.tv_nsec - start.tv_nsec);
   }
-	//очищаем таблицу
-	HT_FREE(ht, string_entry_t, node, free_entry);
-	
-	//создаем заново
-	ht = ht_create(ht_bits);
+  // очищаем таблицу
+  HT_FREE(ht, string_entry_t, node, free_entry);
+
+  // создаем заново
+  ht = ht_create(ht_bits);
 
   // Вычисляем среднее время для одной записи и сравниваем
   long long total_time_for_one = 0;
@@ -229,10 +247,13 @@ void test_add_delete_performance(void) {
 
 int main(void) {
   UNITY_BEGIN();
+
+  RUN_TEST(test_create_hashtable_failed);
   RUN_TEST(test_create_hashtable);
   RUN_TEST(test_add_to_ht);
   RUN_TEST(test_delete_string_from_hashtable);
   RUN_TEST(test_add_and_delete_entries);
   RUN_TEST(test_add_delete_performance);
+
   return UNITY_END();
 }

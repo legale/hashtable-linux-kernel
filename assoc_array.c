@@ -1,19 +1,19 @@
 #include <string.h> // For memcmp if needed
 
 #include "assoc_array.h"
+#include "mock_mem_functions.h"
 
-// malloc, calloc, free mocks for testing
-void *(*custom_malloc)(size_t) = malloc;
-void *(*custom_calloc)(size_t, size_t) = calloc;
-void (*custom_free)(void *) = free;
+// redefine mem functions with custom version
 #define malloc custom_malloc
 #define calloc custom_calloc
 #define free custom_free
 
-void set_memory_functions(void *(*malloc_func)(size_t), void *(*calloc_func)(size_t, size_t), void (*free_func)(void *)) {
-  custom_malloc = malloc_func;
-  custom_calloc = calloc_func;
-  custom_free = free_func;
+static hashtable_t *(*custom_ht_create)(uint32_t) = ht_create;
+
+#define ht_create custom_ht_create
+
+void set_ht_create(hashtable_t *(*ht_create_func)(uint32_t)){
+  custom_ht_create = ht_create_func;
 }
 
 static int fill_assoc_array_entry(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size) {
@@ -25,6 +25,13 @@ static int fill_assoc_array_entry(assoc_array_entry_t *entry, void *data, void *
     return 0;
   }
   return 1;
+}
+
+static void free_assoc_array_entry(void *entry) {
+  assoc_array_entry_t *assoc_entry = (assoc_array_entry_t *)entry;
+  free(assoc_entry->data); // Free the dynamically allocated data
+  free(assoc_entry->key); // Free the dynamically allocated key
+  free(assoc_entry); // Free the entry itself
 }
 
 // Function to create and initialize a new associative array
@@ -52,13 +59,8 @@ array_create(uint32_t bits, void (*free_entry)(void *),
   // Initialize the size
   arr->size = 0;
 
-  // Set the free_entry callback
-  arr->free_entry = free_entry;
-  if (fill_entry) {
-    arr->fill_entry = fill_entry;
-  } else {
-    arr->fill_entry = fill_assoc_array_entry;
-  }
+  arr->free_entry = free_entry ? free_entry : free_assoc_array_entry;
+  arr->fill_entry = fill_entry ? fill_entry : fill_assoc_array_entry;
 
   return arr; // Return the newly created associative array
 }
@@ -87,11 +89,13 @@ int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
   if (!arr) return -1;
   assoc_array_entry_t *new_entry = malloc(sizeof(assoc_array_entry_t));
   if (!new_entry) {
+    perror("malloc for the new_entry failed");
     return -1; // Memory allocation failed
   }
 
   int ret = arr->fill_entry(new_entry, data, key, key_size);
   if (ret) {
+    perror("fill_entry failed");
     free(new_entry);
     return -1; // Memory allocation failed
   }

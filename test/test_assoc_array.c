@@ -3,6 +3,8 @@
 #include "assoc_array.h"
 #include "unity.h"
 
+#include "mock_mem_functions.h" //this header allow to use set_mem_functions() to redefine original
+
 static assoc_array_t *arr = NULL;
 static void *data = NULL;
 static void *data2 = NULL;
@@ -11,6 +13,10 @@ static char key[] = "test_key";
 static char key2[] = "another_test_key";
 
 void *mock_malloc(size_t size) {
+  return NULL; // Simulate memory allocation failure
+}
+
+hashtable_t *mock_ht_create(uint32_t bits) {
   return NULL; // Simulate memory allocation failure
 }
 
@@ -28,10 +34,30 @@ void free_entry(void *entry) {
 }
 
 void test_array_create_failure() {
+  assoc_array_t *arr_failed = NULL;
   set_memory_functions(mock_malloc, calloc, free);
-  assoc_array_t *arr_failed = array_create(10, free_entry, NULL);
+  arr_failed = array_create(10, free_entry, NULL);
   TEST_ASSERT_NULL(arr_failed);
   set_memory_functions(malloc, calloc, free);
+
+  // test ht_create failed
+  set_ht_create(mock_ht_create);
+  arr_failed = array_create(10, free_entry, NULL);
+  TEST_ASSERT_NULL(arr_failed);
+  set_ht_create(ht_create); // restore original ht_create function
+}
+
+void test_array_create_default(void) {
+  uint32_t bits = 10;
+  arr = array_create(bits, NULL, NULL);
+
+  TEST_ASSERT_NOT_NULL(arr); // Check if the array was successfully created
+
+  if (arr != NULL) {
+    TEST_ASSERT_NOT_NULL(arr->ht->table);          // Ensure the hash table exists
+    TEST_ASSERT_EQUAL_UINT32(bits, arr->ht->bits); // Verify the number of bits matches the expected value
+    TEST_ASSERT_EQUAL_UINT32(0, arr->size);        // Check that the initial size is set to 0
+  }
 }
 
 void test_array_create(void) {
@@ -54,6 +80,7 @@ void test_array_free_empty(void) {
 
   int ret = array_free(arr);
   TEST_ASSERT_EQUAL_INT(0, ret);
+  arr = NULL;
 }
 
 void test_array_free_non_empty(void) {
@@ -61,11 +88,42 @@ void test_array_free_non_empty(void) {
   TEST_ASSERT_NOT_EQUAL_UINT32(0, arr->size);
 
   int ret = array_free(arr);
+  arr = NULL;
   TEST_ASSERT_EQUAL_INT(0, ret);
 }
 
-void test_array_add(void) {
+int mock_array_fill_func(assoc_array_entry_t *entry, void *data, void *key, uint8_t key_size) {
+  return 1;
+}
+
+void test_array_create_add_failure_free(void) {
+  // create array normally
   test_array_create();
+
+  // replace fill_entry function with test mock
+  arr->fill_entry = mock_array_fill_func;
+
+  TEST_ASSERT_NOT_EQUAL(0, array_add(arr, NULL, NULL, 0));
+
+  // free empty array
+  test_array_free_empty();
+}
+
+void test_array_create_add_failure2_free(void) {
+  // create array normally
+  test_array_create();
+
+  // replace malloc function
+  set_memory_functions(mock_malloc, calloc, free);
+  TEST_ASSERT_NOT_EQUAL(0, array_add(arr, NULL, NULL, 0));
+  // restore malloc function
+  set_memory_functions(malloc, calloc, free);
+
+  // free empty array
+  test_array_free_empty();
+}
+
+void test_array_add(void) {
   // key and data are global vars
   data = malloc(strlen("test_data") + 1); // +1 for null terminator
   strcpy(data, "test_data");
@@ -104,20 +162,27 @@ void test_array_get_by_key_with_null(void) {
 }
 
 void test_array_del(void) {
-  test_array_add();
   // key and data are global vars
   uint8_t key_size = strlen(key) + 1;
   // Retrieve the element by key
   int ret = array_del(arr, key, key_size);
   TEST_ASSERT_EQUAL_INT(0, ret);
   TEST_ASSERT_EQUAL_UINT32(0, arr->size);
-  test_array_free_empty();
+}
+
+void test_array_del_first(void) {
+  int ret = array_del_first(arr);
+  TEST_ASSERT_EQUAL_INT(0, ret);
+  TEST_ASSERT_EQUAL_UINT32(0, arr->size);
+}
+void test_array_del_last(void) {
+  int ret = array_del_last(arr);
+  TEST_ASSERT_EQUAL_INT(0, ret);
+  TEST_ASSERT_EQUAL_UINT32(0, arr->size);
 }
 
 void test_array_add_replace(void) {
   int ret;
-  arr = array_create(10, free_entry, NULL);
-  TEST_ASSERT_NOT_NULL(arr);
 
   data = malloc(strlen("initial_data") + 1); // +1 for null terminator
   strcpy(data, "initial_data");
@@ -149,10 +214,9 @@ void test_array_add_replace(void) {
   TEST_ASSERT_NOT_NULL(replaced_entry);
   TEST_ASSERT_EQUAL_STRING(data3, replaced_entry->data);
   TEST_ASSERT_EQUAL_UINT32(2, arr->size);
-  test_array_free_non_empty();
 }
 
-void test_array_fill_and_half_delete(void) {
+void test_array_create_fill_half_capacity_del_free(void) {
   uint32_t bits = 10; // Create an array with a specific capacity
   arr = array_create(bits, free_entry, NULL);
   TEST_ASSERT_NOT_NULL(arr);
@@ -202,7 +266,7 @@ void test_array_fill_and_half_delete(void) {
   test_array_free_non_empty();
 }
 
-void test_array_get_first_get_last_with_multiple_entries(void) {
+void test_array_create_get_first_get_last_with_multiple_entries_free(void) {
   // Create a new associative array
   arr = array_create(10, free_entry, NULL);
   TEST_ASSERT_NOT_NULL(arr);
@@ -234,26 +298,62 @@ void test_array_get_first_get_last_with_multiple_entries(void) {
   TEST_ASSERT_EQUAL_STRING(data_entries[0], first_entry->data);
   TEST_ASSERT_EQUAL_STRING(data_entries[19], last_entry->data);
 
-  array_free(arr);
+  // cleanup
+  test_array_free_non_empty();
 }
 
 int main(void) {
   UNITY_BEGIN();
 
+  printf("TEST BLOCK: test array basics\n");
   RUN_TEST(test_array_create_failure);
+  RUN_TEST(test_array_create_default);
+  RUN_TEST(test_array_free_empty);
   RUN_TEST(test_array_create);
   RUN_TEST(test_array_free_empty);
 
+  printf("TEST BLOCK: test array add failure\n");
+  RUN_TEST(test_array_create_add_failure_free);
+  RUN_TEST(test_array_create_add_failure2_free);
+  
+
+  printf("TEST BLOCK: test array with default fill_array function\n");
+  RUN_TEST(test_array_create_default);
   RUN_TEST(test_array_add);
   RUN_TEST(test_array_get_by_key);
   RUN_TEST(test_array_add_with_null);
   RUN_TEST(test_array_get_by_key_with_null);
   RUN_TEST(test_array_free_non_empty);
 
+  printf("TEST BLOCK: test array with custom fill_array function\n");
+  RUN_TEST(test_array_create);
+  RUN_TEST(test_array_add);
+  RUN_TEST(test_array_get_by_key);
+  RUN_TEST(test_array_add_with_null);
+  RUN_TEST(test_array_get_by_key_with_null);
+  RUN_TEST(test_array_free_non_empty);
+
+  printf("TEST BLOCK: test array create, add, del, free\n");
+  RUN_TEST(test_array_create);
+  RUN_TEST(test_array_add);
   RUN_TEST(test_array_del);
+  RUN_TEST(test_array_free_empty);
+
+  printf("TEST BLOCK: test array create, add_replace, free\n");
+  RUN_TEST(test_array_create);
   RUN_TEST(test_array_add_replace);
-  RUN_TEST(test_array_fill_and_half_delete);
-  RUN_TEST(test_array_get_first_get_last_with_multiple_entries);
+  RUN_TEST(test_array_free_non_empty);
+
+  printf("TEST BLOCK: test array create, add, del_first, del_last, free\n");
+  RUN_TEST(test_array_create);
+  RUN_TEST(test_array_add);
+  RUN_TEST(test_array_del_first);
+  RUN_TEST(test_array_add);
+  RUN_TEST(test_array_del_last);
+  RUN_TEST(test_array_free_empty);
+
+  RUN_TEST(test_array_create_fill_half_capacity_del_free);
+  RUN_TEST(test_array_create_get_first_get_last_with_multiple_entries_free);
 
   return UNITY_END();
 }

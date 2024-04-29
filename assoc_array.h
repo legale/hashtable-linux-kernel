@@ -41,6 +41,6 @@ assoc_array_entry_t *array_get_last(assoc_array_t *arr);
 int array_del_first(assoc_array_t *arr);
 int array_del_last(assoc_array_t *arr);
 
-//this func allow to redefine malloc, calloc, free functions
-void set_memory_functions(void *(*malloc_func)(size_t), void *(*calloc_func)(size_t, size_t), void (*free_func)(void *));
+//this func allow to redefine ht_create
+void set_ht_create(hashtable_t *(*ht_create_func)(uint32_t));
 #endif // ASSOC_ARRAY_H
