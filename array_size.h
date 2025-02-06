@@ -2,7 +2,7 @@
 #ifndef _LINUX_ARRAY_SIZE_H
 #define _LINUX_ARRAY_SIZE_H
 
-#include "compiler.h"
+// #include "compiler.h"
 
 /**
  * ARRAY_SIZE - get the number of elements in array @arr

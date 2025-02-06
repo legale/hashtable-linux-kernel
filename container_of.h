@@ -2,7 +2,7 @@
 #ifndef _K_LINUX_CONTAINER_OF_H
 #define _K_LINUX_CONTAINER_OF_H
 
-#include <linux/stddef.h>
+#include <stddef.h>
 #include "build_bug.h"
 
 #define typeof_member(T, m)	typeof(((T*)0)->m)

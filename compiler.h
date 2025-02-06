@@ -122,7 +122,7 @@
 # define __init
 #endif
 
-#include <linux/types.h>
+// #include "types.h"
 
 /*
  * Following functions are taken from kernel sources and

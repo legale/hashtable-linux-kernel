@@ -10,8 +10,9 @@
 #define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
 #endif
 
-#include <asm/types.h>
-#include <asm/posix_types.h>
+// #include <asm/types.h>
+// #include <asm/posix_types.h>
+#include "int-ll64.h"
 
 struct page;
 struct kmem_cache;
@@ -33,14 +34,14 @@ typedef enum {
 typedef uint64_t u64;
 typedef int64_t s64;
 
-typedef __u32 u32;
-typedef __s32 s32;
+typedef uint32_t u32;
+typedef int32_t s32;
 
-typedef __u16 u16;
-typedef __s16 s16;
+typedef uint16_t u16;
+typedef int16_t s16;
 
-typedef __u8  u8;
-typedef __s8  s8;
+typedef uint8_t  u8;
+typedef int8_t  s8;
 
 #ifndef __bitwise
 #ifdef __CHECKER__

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-04-30 01:26:44</td>
+            <td class="headerValue">2025-02-06 14:07:37</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -77,7 +77,7 @@
 <a name="15"><span class="lineNum">      15 </span>            :  */</a>
 <a name="16"><span class="lineNum">      16 </span>            : </a>
 <a name="17"><span class="lineNum">      17 </span>            : #include &lt;stdint.h&gt;</a>
-<a name="18"><span class="lineNum">      18 </span>            : #include &lt;asm/bitsperlong.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : #include &quot;bitsperlong.h&quot;</a>
 <a name="19"><span class="lineNum">      19 </span>            : </a>
 <a name="20"><span class="lineNum">      20 </span>            : </a>
 <a name="21"><span class="lineNum">      21 </span>            : /*</a>
@@ -223,34 +223,34 @@
 <a name="161"><span class="lineNum">     161 </span>            :  *                  -- Ralf S. Engelschall &lt;rse@engelschall.com&gt;</a>
 <a name="162"><span class="lineNum">     162 </span>            :  */</a>
 <a name="163"><span class="lineNum">     163 </span>            : </a>
-<a name="164"><span class="lineNum">     164 </span><span class="lineCov">     145033 : static inline int hash_time33(char const *str, int len)</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">     116998 : static inline int hash_time33(char const *str, int len)</span></a>
 <a name="165"><span class="lineNum">     165 </span>            : {</a>
-<a name="166"><span class="lineNum">     166 </span><span class="lineCov">     145033 :     int hash = 5381;</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">     116998 :     int hash = 5381;</span></a>
 <a name="167"><span class="lineNum">     167 </span>            :     /* Variant with the hash unrolled eight times */</a>
-<a name="168"><span class="lineNum">     168 </span><span class="lineCov">     284291 :     for (; len &gt;= 8; len-= 8) {</span></a>
-<a name="169"><span class="lineNum">     169 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="170"><span class="lineNum">     170 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="172"><span class="lineNum">     172 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="173"><span class="lineNum">     173 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="174"><span class="lineNum">     174 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="175"><span class="lineNum">     175 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
-<a name="176"><span class="lineNum">     176 </span><span class="lineCov">     139258 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">     232170 :     for (; len &gt;= 8; len-= 8) {</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">     115172 :         hash = ((hash &lt;&lt; 5) + hash) + *str++;</span></a>
 <a name="177"><span class="lineNum">     177 </span>            :     }</a>
 <a name="178"><span class="lineNum">     178 </span>            : </a>
-<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     145033 :     switch (len) {</span></a>
-<a name="180"><span class="lineNum">     180 </span><span class="lineCov">       1925 :         case 7: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       5761 :         case 6: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
-<a name="182"><span class="lineNum">     182 </span><span class="lineCov">       5831 :         case 5: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
-<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       5831 :         case 4: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
-<a name="184"><span class="lineNum">     184 </span><span class="lineCov">       5831 :         case 3: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
-<a name="185"><span class="lineNum">     185 </span><span class="lineCov">     106519 :         case 2: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
-<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     134638 :         case 1: hash = ((hash &lt;&lt; 5) + hash) + *str++; break;</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     116998 :     switch (len) {</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">        750 :         case 7: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       1846 :         case 6: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">       1866 :         case 5: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       1866 :         case 4: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">       1866 :         case 3: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">      88170 :         case 2: hash = ((hash &lt;&lt; 5) + hash) + *str++; /* Fallthrough ... */</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     112208 :         case 1: hash = ((hash &lt;&lt; 5) + hash) + *str++; break;</span></a>
 <a name="187"><span class="lineNum">     187 </span>            :         case 0: break;</a>
 <a name="188"><span class="lineNum">     188 </span>            :         default: break;</a>
 <a name="189"><span class="lineNum">     189 </span>            :     }</a>
 <a name="190"><span class="lineNum">     190 </span>            : </a>
-<a name="191"><span class="lineNum">     191 </span><span class="lineCov">     145033 :     return hash;</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">     116998 :     return hash;</span></a>
 <a name="192"><span class="lineNum">     192 </span>            : }</a>
 <a name="193"><span class="lineNum">     193 </span>            : </a>
 <a name="194"><span class="lineNum">     194 </span>            : </a>

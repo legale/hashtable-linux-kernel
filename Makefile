@@ -1,7 +1,9 @@
 # Compiler setup
 CC = gcc -ggdb
+CC_MUSL = musl-gcc -ggdb
+
 AR = ar
-CFLAGS += -Wall -Wextra -O2 -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -O3 -Wno-unused-parameter -ffunction-sections -fdata-sections
 ifdef LEAKCHECK
 CFLAGS += -DLEAKCHECK
 endif
@@ -12,6 +14,7 @@ LDLIBS += -lgcov --coverage
 endif
 
 I += -I./ -I/usr/include -I$(UNITY_ROOT)/src
+I_MUSL = -I./ -I$(shell musl-gcc -print-file-name=include) -I$(UNITY_ROOT)/src
 LDLIBS +=
 LDDIRS += -L$(BD)
 
@@ -41,7 +44,7 @@ TEST_EXECS := $(TEST_SRCS:%.c=$(BD)/%)
 # Phony targets for standard make commands
 .PHONY: all clean test static shared staticlib sharedlib build_dir
 
-all: $(NAME) static shared test
+all: $(NAME) static static_full shared test
 
 # Create build directories
 build_dir:
@@ -69,6 +72,13 @@ sharedlib:
 static: staticlib
 	$(CC) $(CFLAGS) $(I) $(LDDIRS) $(SRC_BIN) -L$(BD) -Wl,-Bstatic -l$(LIBNAME) -Wl,-Bdynamic -o $(BD)/$(NAME)_static
 
+static_full: staticlib
+	$(CC) $(CFLAGS) $(I) $(LDDIRS) $(SRC_BIN) -L$(BD) -l$(LIBNAME) -static -o $(BD)/$(NAME)_staticfull 
+
+# Executable linking with static library and musl
+static_full_musl: staticlib
+	$(CC_MUSL) $(CFLAGS) $(I_MUSL) $(LDDIRS) $(SRC_BIN) -L$(BD) -l$(LIBNAME) -fPIC -static -o $(BD)/$(NAME)_staticfull_musl 
+
 # Executable linking with the shared library
 shared: sharedlib
 	$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $(SRC_BIN) -L$(BD) -Wl,-Bdynamic -l$(LIBNAME) -o $(BD)/$(NAME)_shared
@@ -92,6 +102,17 @@ test: $(TEST_EXECS)
 # Rule to make each test executable
 $(BD)/%: $(BD)/%.o $(OBJS_LIB) $(UNITY_OBJ)
 	$(CC) $(CFLAGS) $(I) $(LDDIRS) $(LDLIBS) $^ -o $@
+
+
+# Добавляем новый рецепт для сборки с musl
+musl: CC = $(CC_MUSL)
+musl: I = $(I_MUSL)
+musl: all
+
+# Пример для сборки тестов с musl
+musl_test: CC = $(CC_MUSL)
+musl_test: I = $(I_MUSL)
+musl_test: test
 
 # Clean up build directory and coverage data
 clean:

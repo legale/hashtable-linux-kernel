@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <linux/if.h>
 #include <netinet/in.h>
 #include <stdio.h>
 
@@ -12,6 +11,14 @@ void tearDown(void) {}
 
 #define FULL_FILL 512
 #define HALF_FILL 256
+
+#ifndef ETH_ALEN
+#define ETH_ALEN 6
+#endif
+
+#ifndef IFHWADDRLEN
+#define IFHWADDRLEN ETH_ALEN
+#endif
 
 typedef struct mac_node {
     struct in_addr ip;

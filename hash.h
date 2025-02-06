@@ -15,7 +15,7 @@
  */
 
 #include <stdint.h>
-#include <asm/bitsperlong.h>
+#include "bitsperlong.h"
 
 
 /*

@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
+#include <inttypes.h>
 
 #include "assoc_array.h"
 
@@ -31,6 +33,38 @@ static char *argv0; /* ptr to the program name string */
 static void incomplete_command(void) {
   fprintf(stderr, "Command line is not complete. Try -h or --help\n");
   exit(-1);
+}
+
+static char *diff_timespec(struct timespec t1, struct timespec t2) {
+  // Проверка на корректность: t2 > t1
+  if (t2.tv_sec < t1.tv_sec || (t2.tv_sec == t1.tv_sec && t2.tv_nsec < t1.tv_nsec)) {
+    return 0;
+  }
+
+  int64_t sec_diff = t2.tv_sec - t1.tv_sec;
+  int64_t nsec_diff = t2.tv_nsec - t1.tv_nsec;
+
+  // Если наносекундная разница отрицательная, вычитаем 1 секунду
+  if (nsec_diff < 0) {
+    sec_diff -= 1;
+    nsec_diff += 1000000000; // Добавляем 1 миллиард наносекунд (1 секунда)
+  }
+
+  // Общая разница в наносекундах
+  int64_t total_nsecs = sec_diff * 1000000000 + nsec_diff;
+
+  char *retstr = malloc(128);
+  // Определяем наиболее подходящие единицы измерения
+  if (total_nsecs >= 1000000000) { // Больше или равно 1 секунде
+    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs / 1000000000, "s");
+  } else if (total_nsecs >= 1000000) { // Меньше секунды, но больше или равно 1 миллисекунде
+    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs / 1000000, "ms");
+  } else if (total_nsecs >= 1000) { // Меньше миллисекунды, но больше или равно 1 микросекунде
+    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs / 1000, "µs");
+  } else { // Меньше микросекунды
+    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs, "ns");
+  }
+  return retstr;
 }
 
 static void usage(void) {
@@ -155,6 +189,10 @@ int main(int argc, char *argv[]) {
 }
 
 int run_example_code(int bits, float density, float print_freq_density) {
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+
+
   // Initialize the associative array
   assoc_array_t *arr = array_create(bits, free_entry, fill_entry);
   mac_node_t *node;
@@ -226,5 +264,13 @@ int run_example_code(int bits, float density, float print_freq_density) {
 	//this is memleak report produced by leak_detector_c.c
 	report_mem_leak();
 #endif
+
+  // Get the start time
+  clock_gettime(CLOCK_MONOTONIC, &end);
+
+  char *t = diff_timespec(start, end);
+  printf("time passed: %s\n", t);
+  free(t);
+
   return 0;
 }

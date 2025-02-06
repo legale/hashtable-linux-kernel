@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2024-04-30 01:26:44</td>
+            <td class="headerValue">2025-02-06 14:07:37</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">0</td>
@@ -134,8 +134,8 @@
 <a name="72"><span class="lineNum">      72 </span>            :  * @param divisor The divisor, which must be a power of two.</a>
 <a name="73"><span class="lineNum">      73 </span>            :  * @return The remainder of 'num' divided by 'divisor'.</a>
 <a name="74"><span class="lineNum">      74 </span>            :  */</a>
-<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     145033 : static inline uint32_t calc_bkt(int num, int divisor) {</span></a>
-<a name="76"><span class="lineNum">      76 </span><span class="lineCov">     145033 :   return (uint32_t)num &amp; (divisor - 1);</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     116998 : static inline uint32_t calc_bkt(int num, int divisor) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">     116998 :   return (uint32_t)num &amp; (divisor - 1);</span></a>
 <a name="77"><span class="lineNum">      77 </span>            : }</a>
 <a name="78"><span class="lineNum">      78 </span>            : </a>
 <a name="79"><span class="lineNum">      79 </span>            : hashtable_t *ht_create(uint32_t bits);</a>
@@ -331,11 +331,11 @@
 <a name="269"><span class="lineNum">     269 </span>            : #define hashtable_del(ht, node) \</a>
 <a name="270"><span class="lineNum">     270 </span>            :   hash_del_bits((ht)-&gt;table, (ht)-&gt;bits, node)</a>
 <a name="271"><span class="lineNum">     271 </span>            : </a>
-<a name="272"><span class="lineNum">     272 </span><span class="lineCov">        131 : static inline void __hash_init(struct hlist_head *ht, unsigned int sz) {</span></a>
-<a name="273"><span class="lineNum">     273 </span><span class="lineCov">        131 :   unsigned int i;</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">         36 : static inline void __hash_init(struct hlist_head *ht, unsigned int sz) {</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">         36 :   unsigned int i;</span></a>
 <a name="274"><span class="lineNum">     274 </span>            : </a>
-<a name="275"><span class="lineNum">     275 </span><span class="lineCov">    6096517 :   for (i = 0; i &lt; sz; i++)</span></a>
-<a name="276"><span class="lineNum">     276 </span><span class="lineCov">    6096386 :     INIT_HLIST_HEAD(&amp;ht[i]);</span></a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineCov">     168996 :   for (i = 0; i &lt; sz; i++)</span></a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">     168960 :     INIT_HLIST_HEAD(&amp;ht[i]);</span></a>
 <a name="277"><span class="lineNum">     277 </span>            : }</a>
 <a name="278"><span class="lineNum">     278 </span>            : </a>
 <a name="279"><span class="lineNum">     279 </span>            : /**</a>
@@ -413,8 +413,8 @@
 <a name="351"><span class="lineNum">     351 </span>            :  * hash_del - remove an object from a hashtable</a>
 <a name="352"><span class="lineNum">     352 </span>            :  * @node: &amp;struct hlist_node of the object to remove</a>
 <a name="353"><span class="lineNum">     353 </span>            :  */</a>
-<a name="354"><span class="lineNum">     354 </span><span class="lineCov">       7259 : static inline void hash_del(struct hlist_node *node) {</span></a>
-<a name="355"><span class="lineNum">     355 </span><span class="lineCov">      14518 :   hlist_del_init(node);</span></a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">       4078 : static inline void hash_del(struct hlist_node *node) {</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">       8156 :   hlist_del_init(node);</span></a>
 <a name="356"><span class="lineNum">     356 </span>            : }</a>
 <a name="357"><span class="lineNum">     357 </span>            : </a>
 <a name="358"><span class="lineNum">     358 </span>            : /**</a>
