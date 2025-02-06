@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef JEMALLOC
+#include "jemalloc.h"
+#endif
 #include "hashtable.h"
 #include "mock_mem_functions.h"
 

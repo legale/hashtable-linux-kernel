@@ -3,7 +3,9 @@
  * (C) 2022  Isaev Ruslan <legale.legale@gmail.com>
  */
 #include <stdlib.h>
-
+#ifdef JEMALLOC
+#include "jemalloc.h"
+#endif
 #include "deque.h"
 
 deq_t *deque_create(void){

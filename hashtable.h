@@ -72,8 +72,8 @@ typedef struct hashtable {
  * @param divisor The divisor, which must be a power of two.
  * @return The remainder of 'num' divided by 'divisor'.
  */
-static inline uint32_t calc_bkt(int num, int divisor) {
-  return (uint32_t)num & (divisor - 1);
+static inline u32 calc_bkt(u32 num, int divisor) {
+  return (u32)num & (divisor - 1);
 }
 
 hashtable_t *ht_create(uint32_t bits);

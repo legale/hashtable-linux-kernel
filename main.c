@@ -10,7 +10,11 @@
 #include <time.h>
 #include <inttypes.h>
 
+#ifdef JEMALLOC
+#include "jemalloc.h"
+#endif
 #include "assoc_array.h"
+
 
 #ifdef LEAKCHECK
 #include "leak_detector_c.h"
@@ -56,11 +60,11 @@ static char *diff_timespec(struct timespec t1, struct timespec t2) {
   char *retstr = malloc(128);
   // Определяем наиболее подходящие единицы измерения
   if (total_nsecs >= 1000000000) { // Больше или равно 1 секунде
-    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs / 1000000000, "s");
+    snprintf(retstr, 256, "%f %s", total_nsecs / 1000000000.0f, "s");
   } else if (total_nsecs >= 1000000) { // Меньше секунды, но больше или равно 1 миллисекунде
-    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs / 1000000, "ms");
+    snprintf(retstr, 256, "%f %s", total_nsecs / 1000000.0f, "ms");
   } else if (total_nsecs >= 1000) { // Меньше миллисекунды, но больше или равно 1 микросекунде
-    snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs / 1000, "µs");
+    snprintf(retstr, 256, "%f %s", total_nsecs / 1000.0f, "µs");
   } else { // Меньше микросекунды
     snprintf(retstr, 256, "%" PRId64 " %s", total_nsecs, "ns");
   }
@@ -258,6 +262,7 @@ int run_example_code(int bits, float density, float print_freq_density) {
   }
 
   // Clean up: Free the associative array and its contents
+  int coll = array_collision_percent(arr);
   array_free(arr);
 
 #ifdef LEAKCHECK
@@ -269,7 +274,7 @@ int run_example_code(int bits, float density, float print_freq_density) {
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   char *t = diff_timespec(start, end);
-  printf("time passed: %s\n", t);
+  printf("time passed: %s collisions: %d%%\n", t, coll);
   free(t);
 
   return 0;

@@ -35,10 +35,10 @@ void free_entry(void *entry) {
 
 void test_array_create_failure() {
   assoc_array_t *arr_failed = NULL;
-  set_memory_functions(mock_malloc, calloc, free);
+  set_memory_functions(mock_malloc, calloc, realloc, free);
   arr_failed = array_create(10, free_entry, NULL);
   TEST_ASSERT_NULL(arr_failed);
-  set_memory_functions(malloc, calloc, free);
+  set_memory_functions(malloc, calloc, realloc, free);
 
   // test ht_create failed
   set_ht_create(mock_ht_create);
@@ -114,10 +114,10 @@ void test_array_create_add_failure2_free(void) {
   test_array_create();
 
   // replace malloc function
-  set_memory_functions(mock_malloc, calloc, free);
+  set_memory_functions(mock_malloc, calloc, realloc, free);
   TEST_ASSERT_NOT_EQUAL(0, array_add(arr, NULL, NULL, 0));
   // restore malloc function
-  set_memory_functions(malloc, calloc, free);
+  set_memory_functions(malloc, calloc, realloc, free);
 
   // free empty array
   test_array_free_empty();

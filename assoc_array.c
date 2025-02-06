@@ -1,5 +1,8 @@
 #include <string.h> // For memcmp if needed
 
+#ifdef JEMALLOC
+#include "jemalloc.h"
+#endif
 #include "assoc_array.h"
 #include "mock_mem_functions.h"
 
@@ -68,8 +71,8 @@ array_create(uint32_t bits, void (*free_entry)(void *),
 assoc_array_entry_t *array_get_by_key(assoc_array_t *arr, void *key, uint8_t key_size) {
   if (!arr) return NULL;
   // Calculate the hash key and bucket index
-  int hash_key = hash_time33(key, key_size); // Assuming hash_time33 is applicable for arbitrary data
-  int bkt = calc_bkt(hash_key, 1 << arr->ht->bits);
+  u32 hash_key = hash32_str(key, key_size);
+  u32 bkt = calc_bkt(hash_key, 1 << arr->ht->bits);
 
   struct hlist_node *tmp;
   assoc_array_entry_t *cur;
@@ -100,7 +103,7 @@ int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
     return -1; // Memory allocation failed
   }
 
-  int hash_key = hash_time33(key, key_size);           // Generate a hash for the key
+  int hash_key = hash32_str(key, key_size);           // Generate a hash for the key
   hashtable_add(arr->ht, &new_entry->hnode, hash_key); // Add to the hash table
   k_list_add_tail(&new_entry->lnode, &arr->list);      // Add to the end of the list
   arr->size++;                                         // Increment the size
@@ -184,4 +187,29 @@ int array_del_first(assoc_array_t *arr) {
 
 int array_del_last(assoc_array_t *arr) {
   return _array_del_first(arr, false);
+}
+
+int array_collision_percent(const assoc_array_t *arr) {
+    if (!arr || !arr->ht || arr->size == 0) {
+        return 0;
+    }
+
+    uint32_t num_buckets = 1 << arr->ht->bits; 
+    size_t collisions = 0;
+
+    for (uint32_t i = 0; i < num_buckets; i++) {
+        struct hlist_head *head = &arr->ht->table[i];
+        size_t count = 0;
+        assoc_array_entry_t *cur;
+
+        hlist_for_each_entry(cur, head, hnode) {
+            count++;
+        }
+
+        if (count > 1) {
+            collisions += (count - 1);
+        }
+    }
+
+    return (int)((collisions * 100) / arr->size);
 }

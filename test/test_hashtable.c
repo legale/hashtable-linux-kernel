@@ -66,10 +66,10 @@ void test_create_hashtable_failed(void) {
   int bits = 12;
 
   // mock mem functions
-  set_memory_functions(mock_malloc, calloc, free);
+  set_memory_functions(mock_malloc, calloc, realloc, free);
   // null expected
   TEST_ASSERT_NULL(ht_create(bits));
-  set_memory_functions(malloc, calloc, free);
+  set_memory_functions(malloc, calloc, realloc, free);
 
   //try to create very big hashtable  
   TEST_ASSERT_NULL(ht_create(UINT32_MAX));

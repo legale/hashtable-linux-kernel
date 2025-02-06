@@ -3,6 +3,7 @@
 #define _TOOLS_LINUX_COMPILER_H_
 
 #include "compiler_types.h"
+#include "types.h"
 
 #ifndef __compiletime_error
 # define __compiletime_error(message)

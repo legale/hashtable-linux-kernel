@@ -44,3 +44,5 @@ int array_del_last(assoc_array_t *arr);
 //this func allow to redefine ht_create
 void set_ht_create(hashtable_t *(*ht_create_func)(uint32_t));
 #endif // ASSOC_ARRAY_H
+
+int array_collision_percent(const assoc_array_t *arr);

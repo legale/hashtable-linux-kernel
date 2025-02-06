@@ -63,10 +63,12 @@ static void add(MEM_INFO alloc_info) {
  */
 void clear() {
   MEMLEAK *curr = head;
+  MEMLEAK *next_node;
 
   while (curr->next != head) {
-    curr = curr->next;
+    next_node = curr->next;
     free(curr);
+    curr = next_node;
   }
 }
 
