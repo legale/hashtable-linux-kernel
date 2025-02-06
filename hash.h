@@ -25,10 +25,10 @@
 #define GOLDEN_RATIO_PRIME_64 0x9e37fffffffc0001UL
 
 
-#if BITS_PER_LONG == 32
+#if __BITS_PER_LONG == 32
 #define GOLDEN_RATIO_PRIME GOLDEN_RATIO_PRIME_32
 #define hash_long(val, bits) hash_32(val, bits)
-#elif BITS_PER_LONG == 64
+#elif __BITS_PER_LONG == 64
 #define hash_long(val, bits) hash_64(val, bits)
 #define GOLDEN_RATIO_PRIME GOLDEN_RATIO_PRIME_64
 #else
@@ -39,7 +39,7 @@ static __always_inline u64 hash_64(u64 val, unsigned int bits)
 {
 	u64 hash = val;
 
-#if defined(CONFIG_ARCH_HAS_FAST_MULTIPLIER) && BITS_PER_LONG == 64
+#if defined(CONFIG_ARCH_HAS_FAST_MULTIPLIER) && __BITS_PER_LONG == 64
 	hash = hash * GOLDEN_RATIO_PRIME_64;
 #else
 	/*  Sigh, gcc can't optimise this alone like it does for 32 bits. */
@@ -80,7 +80,7 @@ static inline u32 hash32_ptr(const void *ptr)
 {
 	unsigned long val = (unsigned long)ptr;
 
-#if BITS_PER_LONG == 64
+#if __BITS_PER_LONG == 64
 	val ^= (val >> 32);
 #endif
 	return (u32)val;
