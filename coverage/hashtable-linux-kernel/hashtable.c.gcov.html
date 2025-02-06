@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-06 14:07:37</td>
+            <td class="headerValue">2025-02-06 14:08:41</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">1</td>
@@ -72,18 +72,18 @@
 <a name="10"><span class="lineNum">      10 </span>            : #define calloc custom_calloc</a>
 <a name="11"><span class="lineNum">      11 </span>            : #define free custom_free</a>
 <a name="12"><span class="lineNum">      12 </span>            : </a>
-<a name="13"><span class="lineNum">      13 </span><span class="lineCov">         40 : hashtable_t *ht_create(uint32_t bits) {</span></a>
-<a name="14"><span class="lineNum">      14 </span><span class="lineCov">         40 :   hashtable_t *ht = malloc(sizeof(hashtable_t));</span></a>
-<a name="15"><span class="lineNum">      15 </span><span class="lineCov">         40 :   if (!ht) return NULL;</span></a>
+<a name="13"><span class="lineNum">      13 </span><span class="lineCov">         60 : hashtable_t *ht_create(uint32_t bits) {</span></a>
+<a name="14"><span class="lineNum">      14 </span><span class="lineCov">         60 :   hashtable_t *ht = malloc(sizeof(hashtable_t));</span></a>
+<a name="15"><span class="lineNum">      15 </span><span class="lineCov">         60 :   if (!ht) return NULL;</span></a>
 <a name="16"><span class="lineNum">      16 </span>            : </a>
-<a name="17"><span class="lineNum">      17 </span><span class="lineCov">         38 :   ht-&gt;bits = bits;</span></a>
-<a name="18"><span class="lineNum">      18 </span><span class="lineCov">         38 :   ht-&gt;table = malloc((1 &lt;&lt; bits) * sizeof(struct hlist_head));</span></a>
-<a name="19"><span class="lineNum">      19 </span><span class="lineCov">         38 :   if (!ht-&gt;table) {</span></a>
-<a name="20"><span class="lineNum">      20 </span><span class="lineCov">          2 :     free(ht);</span></a>
-<a name="21"><span class="lineNum">      21 </span><span class="lineCov">          2 :     return NULL;</span></a>
+<a name="17"><span class="lineNum">      17 </span><span class="lineCov">         57 :   ht-&gt;bits = bits;</span></a>
+<a name="18"><span class="lineNum">      18 </span><span class="lineCov">         57 :   ht-&gt;table = malloc((1 &lt;&lt; bits) * sizeof(struct hlist_head));</span></a>
+<a name="19"><span class="lineNum">      19 </span><span class="lineCov">         57 :   if (!ht-&gt;table) {</span></a>
+<a name="20"><span class="lineNum">      20 </span><span class="lineCov">          3 :     free(ht);</span></a>
+<a name="21"><span class="lineNum">      21 </span><span class="lineCov">          3 :     return NULL;</span></a>
 <a name="22"><span class="lineNum">      22 </span>            :   }</a>
 <a name="23"><span class="lineNum">      23 </span>            : </a>
-<a name="24"><span class="lineNum">      24 </span><span class="lineCov">         36 :   hashtable_init(ht);</span></a>
+<a name="24"><span class="lineNum">      24 </span><span class="lineCov">         54 :   hashtable_init(ht);</span></a>
 <a name="25"><span class="lineNum">      25 </span>            :   return ht;</a>
 <a name="26"><span class="lineNum">      26 </span>            : }</a>
 </pre>

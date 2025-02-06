@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-02-06 14:07:37</td>
+            <td class="headerValue">2025-02-06 14:08:41</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">0</td>
@@ -216,13 +216,13 @@
 <a name="154"><span class="lineNum">     154 </span>            :         }</a>
 <a name="155"><span class="lineNum">     155 </span>            : }</a>
 <a name="156"><span class="lineNum">     156 </span>            : </a>
-<a name="157"><span class="lineNum">     157 </span><span class="lineCov">      60284 : static __always_inline void __write_once_size(volatile void *p, void *res, int size)</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">      71038 : static __always_inline void __write_once_size(volatile void *p, void *res, int size)</span></a>
 <a name="158"><span class="lineNum">     158 </span>            : {</a>
-<a name="159"><span class="lineNum">     159 </span><span class="lineCov">      60284 :         switch (size) {</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">      71038 :         switch (size) {</span></a>
 <a name="160"><span class="lineNum">     160 </span>            :         case 1: *(volatile  __u8_alias_t *) p = *(__u8_alias_t  *) res; break;</a>
 <a name="161"><span class="lineNum">     161 </span>            :         case 2: *(volatile __u16_alias_t *) p = *(__u16_alias_t *) res; break;</a>
 <a name="162"><span class="lineNum">     162 </span>            :         case 4: *(volatile __u32_alias_t *) p = *(__u32_alias_t *) res; break;</a>
-<a name="163"><span class="lineNum">     163 </span><span class="lineCov">      59964 :         case 8: *(volatile __u64_alias_t *) p = *(__u64_alias_t *) res; break;</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">      70558 :         case 8: *(volatile __u64_alias_t *) p = *(__u64_alias_t *) res; break;</span></a>
 <a name="164"><span class="lineNum">     164 </span>            :         default:</a>
 <a name="165"><span class="lineNum">     165 </span>            :                 barrier();</a>
 <a name="166"><span class="lineNum">     166 </span>            :                 __builtin_memcpy((void *)p, (const void *)res, size);</a>
