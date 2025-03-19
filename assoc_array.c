@@ -1,4 +1,5 @@
 #include <string.h> // For memcmp if needed
+#include <errno.h> // error codes
 
 #ifdef JEMALLOC
 #include "jemalloc.h"
@@ -112,7 +113,7 @@ int array_add(assoc_array_t *arr, void *data, void *key, uint8_t key_size) {
 }
 
 int array_del(assoc_array_t *arr, void *key, uint8_t key_size) {
-  if (!arr) return -1;
+  if (!arr) return EINVAL;
   assoc_array_entry_t *existing_entry = array_get_by_key(arr, key, key_size);
 
   if (existing_entry == NULL) return 1;
