@@ -3,12 +3,21 @@
 #include <stdlib.h>
 
 #include <arpa/inet.h>
-#include <net/if.h>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
 #include <inttypes.h>
+
+
+#ifndef IFNAMSIZ
+#define IFNAMSIZ 16
+#endif
+
+#ifndef ETH_ALEN
+#define ETH_ALEN 6
+#endif
+
 
 #ifdef JEMALLOC
 #include "jemalloc.h"
@@ -103,12 +112,12 @@ static bool matches(const char *prefix, const char *string) {
 
 typedef struct mac_node {
   struct in_addr ip;
-  uint8_t mac[IFHWADDRLEN];
+  uint8_t mac[ETH_ALEN];
   const char *hostname;
 } mac_node_t;
 
 static void generate_mac(uint8_t *mac) {
-  for (int i = 0; i < IFHWADDRLEN; i++) {
+  for (int i = 0; i < ETH_ALEN; i++) {
     mac[i] = random() % 256;
   }
 }
@@ -220,7 +229,7 @@ int run_example_code(int bits, float density, float print_freq_density) {
     generate_hostname(&node->hostname, i); // Fill the hostname
 
     // Add the node to the associative array using its MAC address as the key
-    array_add_replace(arr, node, node->mac, IFHWADDRLEN);
+    array_add_replace(arr, node, node->mac, ETH_ALEN);
     if ((i % print_divisor) == 0) {
       printf("entry %d:\n", i);
       print_mac_node(node);
@@ -246,8 +255,8 @@ int run_example_code(int bits, float density, float print_freq_density) {
   printf("new entry array_add_replace\n");
   print_mac_node(node);
 
-  array_add_replace(arr, node, node->mac, IFHWADDRLEN);
-  e = array_get_by_key(arr, node->mac, IFHWADDRLEN);
+  array_add_replace(arr, node, node->mac, ETH_ALEN);
+  e = array_get_by_key(arr, node->mac, ETH_ALEN);
   if (e) {
     node = (mac_node_t *)e->data;
     printf("array_get_by_key last added entry:\n");

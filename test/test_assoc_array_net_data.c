@@ -12,17 +12,17 @@ void tearDown(void) {}
 #define FULL_FILL 512
 #define HALF_FILL 256
 
+#ifndef IFNAMSIZ
+#define IFNAMSIZ 16
+#endif
+
 #ifndef ETH_ALEN
 #define ETH_ALEN 6
 #endif
 
-#ifndef IFHWADDRLEN
-#define IFHWADDRLEN ETH_ALEN
-#endif
-
 typedef struct mac_node {
     struct in_addr ip;
-    uint8_t mac[IFHWADDRLEN];
+    uint8_t mac[ETH_ALEN];
     const char *hostname; 
 } mac_node_t;
 
@@ -67,7 +67,7 @@ void test_mac_node_operations() {
             return;
         }
         node->ip.s_addr = rand(); // Example IP address
-        for (int j = 0; j < IFHWADDRLEN; ++j) {
+        for (int j = 0; j < ETH_ALEN; ++j) {
             node->mac[j] = rand() % 256; // Example MAC address
         }  
 				char hostname[30];
@@ -75,7 +75,7 @@ void test_mac_node_operations() {
         node->hostname = strdup(hostname); // Creating a unique hostname
 
         // Adding the node to the associative array using MAC address as the key
-        int ret = array_add_replace(arr, node, node->mac, IFHWADDRLEN);
+        int ret = array_add_replace(arr, node, node->mac, ETH_ALEN);
 				TEST_ASSERT_EQUAL_INT(0, ret);
 
 				//check size
@@ -98,12 +98,12 @@ void test_mac_node_operations() {
         return;
     }
     new_node->ip.s_addr = rand(); // Example IP address for the new node
-    for (int j = 0; j < IFHWADDRLEN; ++j) {
+    for (int j = 0; j < ETH_ALEN; ++j) {
         new_node->mac[j] = rand() % 256; // Example MAC address for the new node
     }
     new_node->hostname = strdup("new hostname"); // Example hostname for the new node
 
-    array_add(arr, new_node, new_node->mac, IFHWADDRLEN);
+    array_add(arr, new_node, new_node->mac, ETH_ALEN);
     array_del_last(arr); // Deleting the last entry
 
     // Verifying the array size is HALF_FILL after deletion
